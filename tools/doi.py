@@ -1,17 +1,15 @@
-from habanero import Crossref
-from habanero import cn
+from habanero import Crossref, cn
 from typing import List, Union
 import jsonlines
-import psycopg2
 import streamlit as st
 
-conn = psycopg2.connect(database="hamid", user="postgres")
-cur = conn.cursor()
+# conn = psycopg2.connect(database="hamid", user="postgres")
+# cur = conn.cursor()
 
 
 @st.cache_data(show_spinner='updating reference in APA format...')
 def get_citation(
-        doi=Union[List[str] | str],
+        doi: Union[List[str] | str],
         format: str = "text",
         style: str = "apa"
 ) -> Union[List[str] | str]:

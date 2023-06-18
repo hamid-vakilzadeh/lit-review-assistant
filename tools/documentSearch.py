@@ -4,12 +4,12 @@ from langchain.chat_models import ChatOpenAI
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
 import streamlit as st
-import psycopg2
 from typing import Optional, Dict
 
-os.environ["OPENAI_API_KEY"] = toml.load('.streamlit/secrets.toml')['openai']
-conn = psycopg2.connect(database="hamid", user="postgres")
-cur = conn.cursor()  # cursor to execute SQL commands
+
+# os.environ["OPENAI_API_KEY"] = st.secrets['openai']
+# conn = psycopg2.connect(database="hamid", user="postgres")
+# cur = conn.cursor()  # cursor to execute SQL commands
 
 # load the language model we're going to use to control the agent.
 chat = ChatOpenAI(temperature=0)
@@ -45,6 +45,7 @@ def find_docs(
 # docs[0][0].metadata['source']
 
 
+'''
 @st.cache_data
 def get_summary(articles: list[tuple]):
     # get the summary of the article from sql database and return it
@@ -64,3 +65,4 @@ def get_summary(articles: list[tuple]):
     dict_rows = [dict(zip(column_names, row)) for row in rows]
 
     return dict_rows
+'''
