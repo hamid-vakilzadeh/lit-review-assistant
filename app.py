@@ -22,7 +22,12 @@ def choose_model():
 
 if __name__ == '__main__':
     # make page wide
-    st.set_page_config(layout="wide")
+    st.set_page_config(
+        layout="wide",
+        page_title="AI Research Assistant",
+        page_icon="📚",
+    )
+
     header_column1, header_column2 = st.columns([3, 1])
 
     # display the header and general settings
