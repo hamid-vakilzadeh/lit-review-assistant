@@ -1,0 +1,6 @@
+streamlit-pills~=0.3.0
+streamlit~=1.23.1
+langchain~=0.0.198
+toml~=0.10.2
+habanero~=1.2.3
+jsonlines~=3.1.0
