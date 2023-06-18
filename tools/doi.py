@@ -9,7 +9,7 @@ import streamlit as st
 
 @st.cache_data(show_spinner='updating reference in APA format...')
 def get_citation(
-        doi: Union[List[str] | str],
+        doi,
         format: str = "text",
         style: str = "apa"
 ) -> Union[List[str] | str]:
