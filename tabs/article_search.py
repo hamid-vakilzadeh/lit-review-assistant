@@ -1,7 +1,7 @@
 import re
 import streamlit as st
 from tools import documentSearch
-from .openai_api import chat_completion, update_cost, num_tokens_from_messages
+from tools.openai_api import chat_completion, update_cost, num_tokens_from_messages
 # from tools.createTables import get_journal_names
 from tools.doi import get_citation
 from pandas import read_csv

@@ -45,7 +45,7 @@ if __name__ == '__main__':
         # Model creativity measured by temperature
         with sub_column2:
             st.slider(
-                label="**Model creativity** (aka temperature)",
+                label="**Model Creativity** (aka temperature)",
                 min_value=0.0,
                 max_value=1.0,
                 value=0.3,
@@ -60,14 +60,15 @@ if __name__ == '__main__':
         # specify the desired length of the response
         with sub_column3:
             st.slider(
-                label="**Preferred response length** (in words)",
+                label="**Response Cutoff** (in words)",
                 min_value=100,
                 max_value=20000,
                 value=300,
                 step=10,
                 key="max_words",
                 help="The actual response length may vary. "
-                     "This helps the model to generate a response of the desired length."
+                     "This helps the model to generate a response of the desired length. "
+                     "But it may also result in incomplete sentences."
             )
 
     article_search_tab, pdf_tab, literature_review_tab = st.tabs(
