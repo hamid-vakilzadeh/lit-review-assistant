@@ -2,11 +2,13 @@ import openai
 import streamlit as st
 from openai.error import InvalidRequestError
 import tiktoken
+from tenacity import retry, wait_random_exponential, stop_after_attempt
 
 openai.api_key = st.secrets['openai']
 
 
 # request gpt chat
+@retry(wait=wait_random_exponential(multiplier=1, max=40), stop=stop_after_attempt(3))
 @st.cache_resource(show_spinner='AI is thinking...')
 def chat_completion(
         messages: list,
@@ -53,6 +55,7 @@ def chat_completion(
 
 
 # request GPT completion
+@retry(wait=wait_random_exponential(multiplier=1, max=40), stop=stop_after_attempt(3))
 @st.cache_data
 def completion(
         problem: list,

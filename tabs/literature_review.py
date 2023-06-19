@@ -1,7 +1,7 @@
 import re
 import datetime
 import streamlit as st
-from .openai_api import chat_completion, number_of_tokens_tracker
+from tools.openai_api import chat_completion, number_of_tokens_tracker
 from typing import Optional
 
 
