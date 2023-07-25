@@ -6,20 +6,16 @@ import streamlit as st
 
 @st.cache_data(show_spinner='updating reference in APA format...')
 def get_citation(
-        doi,
+        doi: Union[List[str], str],
         format: str = "text",
         style: str = "apa"
 ) -> Union[List[str] | str]:
     """
     Get citation for a given doi
     :param doi: get citation for a given doi or list of dois
-    :type doi: Union[List[str], str]
     :param format: requested format of the citation, eg. text, bibtex, ris, etc.
-    :type format: str
     :param style: citation style, eg. apa, chicago-fullnote-bibliography, etc.
-    :type style: str
     :return: citation in the requested format as a string or list of strings
-    :rtype: Union[List[str], str]
     """
     cr = Crossref(mailto=st.secrets["crossref_mailto"])
     return cn.content_negotiation(ids=doi, format=format, style=style)
@@ -85,6 +81,3 @@ if __name__ == '__main__':
 
     # get available styles
     styles = cn.csl_styles()
-
-    # get citation for a given doi
-
