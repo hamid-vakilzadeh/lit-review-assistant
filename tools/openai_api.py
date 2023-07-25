@@ -4,19 +4,19 @@ from openai.error import InvalidRequestError
 import tiktoken
 from tenacity import retry, wait_random_exponential, stop_after_attempt
 
-openai.api_key = st.secrets['openai']
+openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 
 # request gpt chat
 @retry(wait=wait_random_exponential(multiplier=1, max=40), stop=stop_after_attempt(3))
-@st.cache_resource(show_spinner='AI is thinking...')
 def chat_completion(
         messages: list,
         model: str = 'gpt-3.5-turbo',
         temperature=0.3,
         top_p=1,
         max_tokens=400,
-        stream=False
+        stream=False,
+        n=1
 ):
     """
     :param messages: list of messages to send to the OpenAI chatbot
@@ -41,6 +41,7 @@ def chat_completion(
         max_tokens=max_tokens,
         top_p=top_p,
         stream=stream,
+        n=n
     )
     if stream:
         return response
