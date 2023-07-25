@@ -46,13 +46,10 @@ if __name__ == '__main__':
         page_icon="📚",
     )
 
-    header_column1, header_column2 = st.columns([3, 1])
-
     # display the header and general settings
     with st.container():
         # The header
-        with header_column1:
-            st.header("AI Assistant: helps with accounting research")
+        st.header("AI Assistant for accounting research")
 
         # choice of the model to use
         choose_model()
@@ -85,8 +82,6 @@ if __name__ == '__main__':
                 step=10,
                 key="max_words",
                 help="The actual response length may vary. "
-                     "This helps the model to generate a response of the desired length. "
-                     "But it may also result in incomplete sentences."
             )
 
     article_search_tab, pdf_tab, literature_review_tab = st.tabs(
