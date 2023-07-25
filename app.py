@@ -1,6 +1,10 @@
 import streamlit as st
 from tabs import article_search, literature_review, pdf_search
 from streamlit_pills import pills
+from tabs.session_state_vars import ensure_session_state_vars
+
+# ensure the session state variables are created
+ensure_session_state_vars()
 
 
 def choose_model():
@@ -37,7 +41,7 @@ def choose_model():
 if __name__ == '__main__':
     # make page wide
     st.set_page_config(
-        layout="wide",
+        layout="centered",
         page_title="AI Research Assistant",
         page_icon="📚",
     )
@@ -53,11 +57,11 @@ if __name__ == '__main__':
         # choice of the model to use
         choose_model()
 
-        sub_column2, sub_column3, sub_column4 = st.columns(3)
+        # create 3 columns
+        sub_column1, sub_column2 = st.columns(2)
 
-
-        # Model creativity measured by temperature
-        with sub_column2:
+        # first column shows model creativity measured by temperature
+        with sub_column1:
             st.slider(
                 label="**Model Creativity** (aka temperature)",
                 min_value=0.0,
@@ -72,7 +76,7 @@ if __name__ == '__main__':
             )
 
         # specify the desired length of the response
-        with sub_column3:
+        with sub_column2:
             st.slider(
                 label="**Response Cutoff** (in words)",
                 min_value=100,
@@ -100,5 +104,3 @@ if __name__ == '__main__':
     # display the Literature Review tab
     with literature_review_tab:
         literature_review.literature_review()
-
-    # st.write(st.session_state)
