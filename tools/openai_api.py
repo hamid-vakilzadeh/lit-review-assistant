@@ -7,7 +7,7 @@ from tenacity import retry, wait_random_exponential, stop_after_attempt
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 
-# request gpt chat
+# request gpt chat completion
 @retry(wait=wait_random_exponential(multiplier=1, max=40), stop=stop_after_attempt(3))
 def chat_completion(
         messages: list,
@@ -20,17 +20,11 @@ def chat_completion(
 ):
     """
     :param messages: list of messages to send to the OpenAI chatbot
-    :type messages: list
     :param model: the model name to use for the completion
-    :type model: str
     :param temperature: the temperature to use for the completion
-    :type temperature: float
     :param top_p: the top_p to use for the completion
-    :type top_p: float
     :param max_tokens: the max_tokens to use for the completion
-    :type max_tokens: int
     :param stream: whether to stream the response or not
-    :type stream: bool
     :return: the response from the OpenAI chatbot
     """
 
@@ -55,52 +49,6 @@ def chat_completion(
             raise Exception(f'response incomplete: {response["finish_reason"]}')
 
 
-# request GPT completion
-@retry(wait=wait_random_exponential(multiplier=1, max=40), stop=stop_after_attempt(3))
-@st.cache_data
-def completion(
-        problem: list,
-        model: str,
-        temperature,
-        top_p=1,
-        max_tokens=120
-):
-    try:
-        response = openai.Completion.create(
-            model=model,
-            prompt=problem,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            top_p=top_p,
-
-        )
-        if response['choices'][0]['finish_reason'] == 'stop':
-            response_ms = response.response_ms
-            return dict(answer=response['choices'][0]['text'].strip(),
-                        completion=response.to_dict(), response_ms=response_ms)
-        else:
-            raise Exception(f'response incomplete: {response["finish_reason"]}')
-    except InvalidRequestError:
-        st.error("Invalid request error. Please try again.")
-
-
-def update_cost():
-    """
-    calculate the cost of the last response
-    """
-
-    st.session_state.last_token_cost = (st.session_state.tokens_sent * 0.0015 / 1000) + \
-                                       (st.session_state.tokens_received * 0.0002 / 1000)
-
-    # update total tokens sent and received
-    st.session_state.total_tokens_sent += st.session_state.tokens_sent
-    st.session_state.total_tokens_received += st.session_state.tokens_received
-
-    # calculate the total cost
-    st.session_state.total_token_cost = (st.session_state.total_tokens_sent * 0.0015 / 1000) + \
-                                        (st.session_state.total_tokens_received * 0.0002 / 1000)
-
-
 def num_tokens_from_messages(
         messages: list,
         model: str = "gpt-3.5-turbo-0301"
@@ -108,9 +56,8 @@ def num_tokens_from_messages(
     """
     Returns the number of tokens used by a list of messages.
     :param messages: list of messages
-    :type messages: list
     :param model: the model name to calculate the number of tokens for
-    :type model: str
+    :return: the number of tokens
     """
     try:
         encoding = tiktoken.encoding_for_model(model)
@@ -146,11 +93,11 @@ def num_tokens_from_messages(
 def number_of_tokens_tracker(
         prompt: list
 ) -> int:
-    """total number of tokens that will be submitted to OpenAI
+    """
+    total number of tokens that will be submitted to OpenAI
+
     :param prompt: the prompt to be submitted to OpenAI
-    :type prompt: list
     :return: the number of tokens
-    :rtype: int
     """
     return num_tokens_from_messages(
                     messages=prompt,
