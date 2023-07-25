@@ -3,9 +3,6 @@ from typing import List, Union
 import jsonlines
 import streamlit as st
 
-# conn = psycopg2.connect(database="hamid", user="postgres")
-# cur = conn.cursor()
-
 
 @st.cache_data(show_spinner='updating reference in APA format...')
 def get_citation(
@@ -24,6 +21,7 @@ def get_citation(
     :return: citation in the requested format as a string or list of strings
     :rtype: Union[List[str], str]
     """
+    cr = Crossref(mailto=st.secrets["crossref_mailto"])
     return cn.content_negotiation(ids=doi, format=format, style=style)
 
 
@@ -62,7 +60,7 @@ def get_journal_from_article(
 
 
 if __name__ == '__main__':
-    cr = Crossref(mailto="vakilzas@uww.edu")
+    cr = Crossref(mailto=st.secrets["crossref_mailto"])
 
     # pass example doi to get metadata
     articles = [
