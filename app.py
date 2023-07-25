@@ -7,17 +7,31 @@ def choose_model():
     # Choose the model to use for generating the response
     chosen_model = pills(
         label='Model Name',
-        options=['GPT-3.5', 'GPT-3.5 16K', 'GPT-4', 'GPT-4 32K'],
+        options=[
+            'OpenAI: GPT-3.5 16K',
+            'OpenAI: GPT-4 32K',
+            'Google: PaLM 2 Bison',
+            'Anthropic: Claude v2',
+            'Anthropic: Claude Instant v1',
+            'Meta: Llama v2 13B Chat',
+            'Meta: Llama v2 70B Chat',
+                 ],
     )
 
-    if chosen_model == 'GPT-3.5':
-        st.session_state.selected_model = 'gpt-3.5-turbo'
-    if chosen_model == 'GPT-4':
-        st.session_state.selected_model = 'gpt-4'
-    if chosen_model == 'GPT-3.5 16K':
-        st.session_state.selected_model = 'gpt-3.5-turbo-16k'
-    if chosen_model == 'GPT-4 32K':
-        st.session_state.selected_model = 'gpt-4-32k'
+    if chosen_model == 'OpenAI: GPT-3.5 16K':
+        st.session_state.selected_model = 'openai/gpt-3.5-turbo-16k'
+    if chosen_model == 'OpenAI: GPT-4 32K':
+        st.session_state.selected_model = 'openai/gpt-4-32k'
+    if chosen_model == 'Google: PaLM 2 Bison':
+        st.session_state.selected_model = 'google/palm-2-chat-bison'
+    if chosen_model == 'Anthropic: Claude v2':
+        st.session_state.selected_model = 'anthropic/claude-2'
+    if chosen_model == 'Anthropic: Claude Instant v1':
+        st.session_state.selected_model = 'anthropic/claude-instant-v1'
+    if chosen_model == 'Meta: Llama v2 13B Chat':
+        st.session_state.selected_model = 'meta-llama/llama-2-13b-chat'
+    if chosen_model == 'Meta: Llama v2 70B Chat':
+        st.session_state.selected_model = 'meta-llama/llama-2-70b-chat'
 
 
 if __name__ == '__main__':
@@ -36,11 +50,11 @@ if __name__ == '__main__':
         with header_column1:
             st.header("AI Assistant: helps with accounting research")
 
-        sub_column1, sub_column2, sub_column3, sub_column4 = st.columns(4)
-
         # choice of the model to use
-        with sub_column1:
-            choose_model()
+        choose_model()
+
+        sub_column2, sub_column3, sub_column4 = st.columns(3)
+
 
         # Model creativity measured by temperature
         with sub_column2:
@@ -87,14 +101,4 @@ if __name__ == '__main__':
     with literature_review_tab:
         literature_review.literature_review()
 
-    # display the cost card
-    with header_column2:
-        # display the cost of total accumulated cost
-        if 'total_token_cost' in st.session_state:
-            st.metric(
-                label="Estimated Cost",
-                help="Cost is estimated based on the number of tokens used.",
-                value=f"${st.session_state.total_token_cost:.4f}",
-                delta=f"${st.session_state.total_token_cost - st.session_state.last_token_cost:.4f}"
-            )
     # st.write(st.session_state)
