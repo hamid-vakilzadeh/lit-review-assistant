@@ -24,8 +24,8 @@ def lit_review_message(
     all_summaries = []
     for summary in summaries:
         all_summaries.append(
-            f"Summary of {re.sub(r'https.*', '', summary['doc'][0].metadata['citation']).strip()}:\n "
-            f"{summary['summary']}\n"
+            f"Summary of {re.sub(r'https.*', '', st.session_state.citations[summary['id']]).strip()}:\n "
+            f"{st.session_state.summaries[summary['id']]}\n"
         )
 
     all_summaries = "\n".join(all_summaries)
@@ -113,10 +113,10 @@ def literature_review():
         # display the selected articles
         for article in st.session_state.notes:
             with st.expander(
-                    label=f"{article['doc'][0].metadata['citation'].strip()}",
+                    label=f"{st.session_state.citations[article['id']].strip()}",
                     expanded=False
             ):
-                st.write(f"{article['summary']}")
+                st.write(f"{st.session_state.summaries[article['id']]}")
 
     # space to provide more instructions to the AI
     with st.container():
