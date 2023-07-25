@@ -35,8 +35,8 @@ def prep_gpt_summary(
         {"role": "user", "content": (f"{summary_style}"
                                      "always use APA style and always mention the citation.\n"
                                      "e.g. ... et al. (2022) find that ... or similar.\n"
-                                     f"This is the abstract: {document['doc'][0].page_content}\n"
-                                     f"and this is the reference: {document['doc'][0].metadata['citation']}\n "
+                                     f"This is the abstract: {document['doc']}\n"
+                                     f"and this is the reference: {document['citation']}\n "
                                      f"Begin\n "
                                      )
          },
@@ -66,14 +66,14 @@ def sort_results(sort_method):
 # add to notes
 def add_to_notes(paper):
     st.session_state.notes.append(paper)
-    st.session_state.added_articles.append(paper['doc'][0].metadata['doi'])
+    st.session_state.added_articles.append(paper['id'])
 
 
 # remove from notes
 def remove_from_notes(paper):
     st.session_state.notes.remove(paper)
     st.session_state.added_articles.remove(
-        paper['doc'][0].metadata['doi']
+        paper['id']
     )
 
 
@@ -86,6 +86,15 @@ def update_filter():
 def article_search():
     st.subheader("Article Search")
     # user input for topic to search for
+    # explain
+    st.markdown("Start with searching for articles that are relevant to your research topic: \n\n "
+                "- Search for a topic by entering a keyword or a phrase. \n "
+                "- Use quotation marks to search for an exact phrase (*e.g \"audit quality\"*). \n"
+                "- Use the logical operators *AND* and *OR* to narrow down your search. "
+                "(*e.g. \"audit quality\" AND \"earnings management\" will search for articles that contain both "
+                "audit quality and earnings management*). "
+                )
+
     user_input = st.text_input(
         label="**Search a Topic**",
         placeholder="search for a topic, "
@@ -93,6 +102,28 @@ def article_search():
                     "or 'audit quality and earnings management'",
         key="search",
     )
+
+    # find all exact phrase requested
+    logical_operator = None
+    exact_matched = []
+
+    if st.session_state.search.strip() != "":
+        # find exact search matches:
+        pattern = r'"([^"]+)"'
+
+        exact_matched = re.findall(pattern, st.session_state.search)
+
+        # find the condition specified
+        pattern = r'\b(AND|OR)\b'
+
+        # condition specified
+        cond = re.search(pattern, st.session_state.search)
+
+        if cond:
+            logical_operator = cond.group(1)
+        else:
+            logical_operator = None
+
 
     left_column, right_column = st.columns(2)
 
@@ -118,9 +149,6 @@ def article_search():
                 step=1,
                 key="year")
 
-            st.session_state.include_only = {
-                'year': {'$in': list(range(st.session_state.year[0], st.session_state.year[1]))}}
-
     with right_column:
         st.multiselect(
             label="**Select Journals** (leave empty for all journals)",
@@ -129,6 +157,11 @@ def article_search():
             key='selected_journal',
             disabled=False
         )
+        if len(st.session_state.selected_journal) > 0:
+            my_journals = [{k: v for k, v in d.items() if k != 'number_of_articles'} for d in st.session_state.selected_journal]
+        else:
+            my_journals = None
+
 
     # add a session state to store the relevant articles
     if 'relevant_articles' not in st.session_state:
@@ -170,47 +203,49 @@ def article_search():
     if 'keep_review_label' not in st.session_state:
         st.session_state.keep_review_label = "Keep"
 
+    # add a session state to keep track of summaries generated
+    if 'summaries' not in st.session_state:
+        st.session_state.summaries = {}
+
+    # add a session state to keep track of citations
+    if 'citations' not in st.session_state:
+        st.session_state.citations = {}
+
     if st.button(
             label="Search",
             type="primary"
     ):
-        if st.session_state.search == "":
+        if st.session_state.search.strip() == "":
             st.error("Please enter a search topic")
         else:
             st.session_state.relevant_articles = documentSearch.find_docs(
                 topic=user_input,
                 number_of_docs=st.session_state.number_of_articles,
-                # include_only={"where": {"$or": [{"year": "2021"}, {"year": "2000"}]}}
-                # include_only={'$or': [{'year': '2021'}, {'year': '2020'}], 'journal': 'The Accounting Review'}
+                year_range=[st.session_state.year[0], st.session_state.year[1]],
+                journal=my_journals,
+                contains=exact_matched,
+                condition=logical_operator
             )
 
-        # get summary from session state if it exists
-        for article in st.session_state.relevant_articles:
-            if article['doc'][0].metadata['doi'] in st.session_state.added_articles:
-                article['summary'] = st.session_state.notes[
-                    st.session_state.added_articles.index(article['doc'][0].metadata['doi'])]['summary']
+    if len(st.session_state.relevant_articles) == 0:
+        st.info("No articles found. Please try again.")
 
     # display the articles
     for article in st.session_state.relevant_articles:
         col1, col2 = st.columns([5, 1])
         with col1:
             # search the sql database for the article summary/bullet points
-            st.markdown(f"**{article['doc'][0].metadata['title']}**")
-            st.markdown(
-                f"*{article['doc'][0].metadata['journal']}*, "
-                f" **{article['doc'][0].metadata['year']}**")
-            st.markdown('**Summary**')
-            ai_response = st.empty()
+            st.markdown(f"**{article['title']}**, *{article['journal']} {article['year']}* {article['doi']}")
 
-            # get citation from article by doi
-            article['doc'][0].metadata['citation'] = get_citation(
-                article['doc'][0].metadata['doi'])
+            st.session_state[f"{article['id']}_container"] = st.empty()
+            if article['id'] in st.session_state.summaries.keys():
+                st.session_state[f"{article['id']}_container"].markdown(f'{st.session_state.summaries[article["id"]]}')
 
         with col2:
             # write journal name
             st.metric(
                 label='Relevance Score',
-                value=f"{(round(1 - article['doc'][1], 3) * 100)}%"
+                value=f"{round((1 - round(article['distance'], 2)) * 100)}%"
             )
 
             # number of citations
@@ -219,55 +254,11 @@ def article_search():
                 value=f"{article['cite_counts']}"
             )
 
-        with col1:
-            prompt = prep_gpt_summary(
-                article,
-                bullet_point=True,
-                number_of_words=st.session_state.max_words
-            )
-
-            # get summary of the abstract
-            if 'summary' not in article:
-                # count the number of tokens in the prompt
-                st.session_state.tokens_sent += num_tokens_from_messages(prompt)
-
-                response = chat_completion(
-                    messages=prompt,
-                    model=st.session_state.selected_model,
-                    temperature=st.session_state.temperature,
-                    max_tokens=int(st.session_state.max_words*4/3),
-                    stream=True
-                )
-
-                # stream the response
-                collected_chunks = []
-                report = []
-                for chunk in response:
-                    collected_chunks.append(chunk)  # save the event response
-                    if 'content' in chunk['choices'][0]['delta']:
-                        report.append(chunk.choices[0]['delta']['content'])
-                        st.session_state.last_response = "".join(report).strip()
-                        ai_response.markdown(f'{st.session_state.last_response}')
-                article['summary'] = st.session_state.last_response
-
-                # count the number of tokens in the response
-                st.session_state.tokens_received += len(collected_chunks)
-                update_cost()
-
-            else:
-                ai_response.markdown(f'{article["summary"]}')
-
-            # Show citation
-            st.markdown(f"**{re.sub(r'https.*', '', article['doc'][0].metadata['citation']).strip()}**")
-            st.markdown(f"**DOI**: {article['doc'][0].metadata['doi']}")
-
-        with col2:
-            # add to notes
             if len(st.session_state.relevant_articles) > 0:
-                if article['doc'][0].metadata['doi'] not in st.session_state.added_articles:
+                if article['id'] not in st.session_state.added_articles:
                     st.button(
                         label="Add to Notes",
-                        key=article['doc'][0].metadata['doi'],
+                        key=article['id'],
                         help="Add this article to your notes for literature review",
                         type='primary',
                         on_click=add_to_notes,
@@ -277,11 +268,74 @@ def article_search():
                 else:  # if already added to notes
                     st.button(
                         label="Remove",
-                        key=article['doc'][0].metadata['doi'],
+                        key=article['id'],
                         help="Remove this article from your notes for literature review",
                         type='secondary',
                         on_click=remove_from_notes,
                         args=(article,)
                     )
+        st.markdown('---')
 
-        st.markdown("----")
+    for article in st.session_state.relevant_articles:
+
+        # get summary of the abstract
+        if article['id'] not in st.session_state.summaries.keys():
+            st.session_state[f"{article['id']}_container"].button(
+                label="Get AI Generated Summary",
+                key=f"summarize_{article['id']}",
+                type='secondary'
+            )
+
+            if st.session_state[f"summarize_{article['id']}"]:
+                # get citation from article by doi
+                if article['id'] not in st.session_state.citations.keys():
+                    with st.session_state[f"{article['id']}_container"]:
+                        st.session_state.citations[article['id']] = get_citation(article['doi'])
+
+                article['citation'] = st.session_state.citations.get(article['id'])
+
+                prompt = prep_gpt_summary(
+                    article,
+                    bullet_point=True,
+                    number_of_words=st.session_state.max_words
+                )
+
+                # count the number of tokens in the prompt
+                st.session_state.tokens_sent += num_tokens_from_messages(prompt)
+
+                with st.session_state[f"{article['id']}_container"]:
+                    response = chat_completion(
+                        messages=prompt,
+                        model=st.session_state.selected_model,
+                        temperature=st.session_state.temperature,
+                        max_tokens=int(st.session_state.max_words * 4 / 3),
+                        stream=True
+                    )
+
+                # stream the response
+                collected_chunks = []
+                report = []
+                for chunk in response:
+                    collected_chunks.append(chunk)  # save the event response
+                    if 'content' in chunk['choices'][0]['delta']:
+                        report.append(chunk.choices[0]['delta']['content'])
+                        st.session_state.last_response = "".join(report).strip()
+                        st.session_state[f"{article['id']}_container"].markdown(f'{st.session_state.last_response}')
+                st.session_state.summaries[article['id']] = st.session_state.last_response
+
+                # count the number of tokens in the response
+                st.session_state.tokens_received += len(collected_chunks)
+                update_cost()
+
+        else:
+            with st.session_state[f"{article['id']}_container"]:
+                st.markdown('**Summary**')
+                st.markdown(
+                    f'{st.session_state.summaries[article["id"]]}')
+
+        # Show citation
+        # st.markdown(f"{re.sub(r'https.*', '', article['citation']).strip()}")
+
+
+
+    #st.write(st.session_state)
