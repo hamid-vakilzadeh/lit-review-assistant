@@ -1,68 +1,85 @@
 import os
-import toml
-from langchain.chat_models import ChatOpenAI
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.vectorstores import Chroma
 import streamlit as st
-from typing import Optional, Dict
+import chromadb
+from chromadb.utils import embedding_functions
+
+os.environ["OPENAI_API_KEY"] = st.secrets['openai']
 
 
-# os.environ["OPENAI_API_KEY"] = st.secrets['openai']
-# conn = psycopg2.connect(database="hamid", user="postgres")
-# cur = conn.cursor()  # cursor to execute SQL commands
+openai_ef = embedding_functions.OpenAIEmbeddingFunction(
+    model_name="text-embedding-ada-002"
+)
 
-# load the language model we're going to use to control the agent.
-chat = ChatOpenAI(temperature=0)
+api = chromadb.PersistentClient(path="library")
+collection = api.get_collection("langchain", embedding_function=openai_ef)
 
-# for retrieving documents from the database
-embeddings = OpenAIEmbeddings()
-db = Chroma(persist_directory='library/aaa/aaa-db2',
-            embedding_function=embeddings)
 
+# TODO: Check the DOI for year = 0
 
 @st.cache_data(show_spinner='searching for relevant articles...')
 def find_docs(
         topic: str,
-        include_only: Optional[Dict[str, str]] = None,
-        number_of_docs: int = 10, ) -> list:
+        year_range: list[int] = None,
+        journal: list[str] = None,
+        contains: list[str] = None,
+        condition: str = None,
+        number_of_docs: int = 10,
+) -> list:
     # find documents related to the topic
-    docs = db.similarity_search_with_score(
-        query=topic,
-        k=number_of_docs,
-        )
+    year_cond = {"$and": [
+        {"year": {"$gte": year_range[0]}},
+        {"year": {"$lte": year_range[1]}}
+    ]}
+
+    if not journal:
+        where = year_cond
+
+    elif len(journal) == 1:
+        where = {"$and": [
+            journal[0],
+            year_cond
+        ]
+        }
+    else:
+        where = {"$and": [
+            {"$or": journal,
+             },
+            year_cond
+        ]
+        }
+
+    where_document = None
+
+    if contains and len(contains) == 1:
+        where_document = {"$contains": contains[0]}
+    elif contains:
+        contains_items = []
+        for item in contains:
+            contains_items.append({"$contains": item})
+        if condition == "AND":
+            where_document = {"$and": contains_items}
+        elif condition == "OR":
+            where_document = {"$or": contains_items}
+        elif not condition:
+            where_document = {"$and": contains_items}
+
+    docs = collection.query(
+        query_texts=topic,
+        where=where,
+        where_document=where_document,
+        n_results=number_of_docs,
+    )
 
     results = []
-    for doc in docs:
-        this_doc = {'doc': doc,
-                    'year': int(doc[0].metadata['year']),
-                    'cite_counts': int(doc[0].metadata['cite_counts'])
+    for i in range(len(docs['ids'][0])):
+        this_doc = {'doc': docs['documents'][0][i],
+                    'year': docs['metadatas'][0][i]['year'],
+                    'cite_counts': docs['metadatas'][0][i]['cite_counts'],
+                    'title': docs['metadatas'][0][i]['title'],
+                    'journal': docs['metadatas'][0][i]['journal'],
+                    'doi': docs['metadatas'][0][i]['doi'],
+                    'id': docs['ids'][0][i],
+                    'distance': docs['distances'][0][i]
                     }
         results.append(this_doc)
     return results
-
-
-# docs[0][0].page_content
-# docs[0][0].metadata['source']
-
-
-'''
-@st.cache_data
-def get_summary(articles: list[tuple]):
-    # get the summary of the article from sql database and return it
-    papers = [i[0].metadata["source"] for i in articles]
-    placeholders = ', '.join(['%s' for item in papers])
-
-    # papers = pd.DataFrame([i[0].metadata['source'] for i in articles], columns=['citation'])
-    query = f"SELECT * FROM articles WHERE citation IN ({placeholders})"
-    cur.execute(query, papers)
-
-    rows = cur.fetchall()
-
-    # Get the column names from the cursor description
-    column_names = [desc[0] for desc in cur.description]
-
-    # Convert the list of tuples into a list of dictionaries
-    dict_rows = [dict(zip(column_names, row)) for row in rows]
-
-    return dict_rows
-'''
