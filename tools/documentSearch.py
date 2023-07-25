@@ -3,8 +3,6 @@ import streamlit as st
 import chromadb
 from chromadb.utils import embedding_functions
 
-os.environ["OPENAI_API_KEY"] = st.secrets['openai']
-
 
 openai_ef = embedding_functions.OpenAIEmbeddingFunction(
     model_name="text-embedding-ada-002"
