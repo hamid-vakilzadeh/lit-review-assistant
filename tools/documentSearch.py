@@ -1,4 +1,3 @@
-import os
 import streamlit as st
 import chromadb
 from chromadb.utils import embedding_functions
@@ -23,21 +22,36 @@ def find_docs(
         condition: str = None,
         number_of_docs: int = 10,
 ) -> list:
-    # find documents related to the topic
+    """
+    Find documents in the database that match the given criteria.
+
+    :param topic: The topic to search for.
+    :param year_range: The range of years to search for.
+    :param journal: The list of journals to include in the search.
+    :param contains: The list of exact words/phrases to search for in the document.
+    :param condition: The condition to use when searching for the words (only AND/OR).
+    :param number_of_docs: The number of documents to return.
+    """
+
+    # always enforce year range
     year_cond = {"$and": [
         {"year": {"$gte": year_range[0]}},
         {"year": {"$lte": year_range[1]}}
     ]}
 
+    # if no journal, just use year
     if not journal:
         where = year_cond
 
+    # for only one journal
     elif len(journal) == 1:
         where = {"$and": [
             journal[0],
             year_cond
         ]
         }
+
+    # for multiple journals
     else:
         where = {"$and": [
             {"$or": journal,
@@ -46,10 +60,14 @@ def find_docs(
         ]
         }
 
+    # if no contains, just use None
     where_document = None
 
+    # for only one criterion for contains
     if contains and len(contains) == 1:
         where_document = {"$contains": contains[0]}
+
+    # for multiple criteria for contains
     elif contains:
         contains_items = []
         for item in contains:
@@ -61,6 +79,7 @@ def find_docs(
         elif not condition:
             where_document = {"$and": contains_items}
 
+    # query the database
     docs = collection.query(
         query_texts=topic,
         where=where,
@@ -68,6 +87,7 @@ def find_docs(
         n_results=number_of_docs,
     )
 
+    # return the results in the desired format
     results = []
     for i in range(len(docs['ids'][0])):
         this_doc = {'doc': docs['documents'][0][i],
@@ -80,4 +100,5 @@ def find_docs(
                     'distance': docs['distances'][0][i]
                     }
         results.append(this_doc)
+
     return results
