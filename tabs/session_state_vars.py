@@ -14,22 +14,6 @@ def ensure_session_state_vars():
     if 'added_articles' not in st.session_state:
         st.session_state.added_articles = []
 
-    # add a session state to keep track of tokens sent
-    if 'tokens_sent' not in st.session_state:
-        st.session_state.tokens_sent = 0
-
-    # add a session state to keep track of tokens received
-    if 'tokens_received' not in st.session_state:
-        st.session_state.tokens_received = 0
-
-    # add a session state to keep track of total tokens sent
-    if 'total_tokens_sent' not in st.session_state:
-        st.session_state.total_tokens_sent = 0
-
-    # add a session state to keep track of total tokens received
-    if 'total_tokens_received' not in st.session_state:
-        st.session_state.total_tokens_received = 0
-
     # add a session state to keep track of previous reviews
     if 'previous_reviews' not in st.session_state:
         st.session_state.previous_reviews = []
