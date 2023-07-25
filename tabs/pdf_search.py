@@ -7,10 +7,6 @@ import json
 
 text_splitter = CharacterTextSplitter(chunk_size=3000, chunk_overlap=0)
 
-# create a state to track the pdf summaries
-if 'pdf_summaries' not in st.session_state:
-    st.session_state.pdf_summaries = {}
-
 
 def prep_gpt_review(
         document,
