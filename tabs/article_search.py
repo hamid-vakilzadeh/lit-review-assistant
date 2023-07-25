@@ -1,11 +1,12 @@
 import re
 import streamlit as st
 from tools import documentSearch
-from tools.openai_api import chat_completion, update_cost, num_tokens_from_messages
+from tools.ai import ai_completion
 # from tools.createTables import get_journal_names
 from tools.doi import get_citation
 from pandas import read_csv
 from typing import Optional
+import json
 
 
 @st.cache_data
@@ -301,31 +302,34 @@ def article_search():
                 )
 
                 # count the number of tokens in the prompt
-                st.session_state.tokens_sent += num_tokens_from_messages(prompt)
 
                 with st.session_state[f"{article['id']}_container"]:
-                    response = chat_completion(
+                    response = ai_completion(
                         messages=prompt,
                         model=st.session_state.selected_model,
                         temperature=st.session_state.temperature,
-                        max_tokens=int(st.session_state.max_words * 4 / 3),
-                        stream=True
+                        max_tokens=1500,
+                        stream=True,
                     )
+                    collected_chunks = []
+                    report = []
+                    for line in response.iter_lines():
+                        if line and 'data' in line.decode('utf-8'):
+                            content = line.decode('utf-8').replace('data: ', '')
+                            if 'content' in content:
+                                message = json.loads(content, strict=False)
+                                collected_chunks.append(message)  # save the event response
+                                report.append(message['choices'][0]['delta']['content'])
+                                st.session_state.last_response = "".join(report).strip()
+                                st.session_state[f"{article['id']}_container"].markdown(f'{st.session_state.last_response}')
 
-                # stream the response
-                collected_chunks = []
-                report = []
-                for chunk in response:
-                    collected_chunks.append(chunk)  # save the event response
-                    if 'content' in chunk['choices'][0]['delta']:
-                        report.append(chunk.choices[0]['delta']['content'])
-                        st.session_state.last_response = "".join(report).strip()
-                        st.session_state[f"{article['id']}_container"].markdown(f'{st.session_state.last_response}')
                 st.session_state.summaries[article['id']] = st.session_state.last_response
 
-                # count the number of tokens in the response
-                st.session_state.tokens_received += len(collected_chunks)
-                update_cost()
+                # delete the last response
+                st.session_state.pop('last_response', None)
+
+                if st.session_state.selected_model == 'google/palm-2-chat-bison':
+                    st.experimental_rerun()
 
         else:
             with st.session_state[f"{article['id']}_container"]:
