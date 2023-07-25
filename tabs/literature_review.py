@@ -1,8 +1,9 @@
 import re
 import datetime
 import streamlit as st
-from tools.openai_api import chat_completion, number_of_tokens_tracker
+from tools.ai import ai_completion
 from typing import Optional
+import json
 
 
 def lit_review_message(
@@ -156,7 +157,7 @@ def literature_review():
         submit_col, info_col1 = st.columns([1, 7])
 
         # current number of tokens
-        current_tokens = number_of_tokens_tracker(prompt)
+        current_tokens = 0
 
         with info_col1:
             # show warning if number of tokens exceeds 4096 and the model is gpt-3.5-turbo
@@ -214,23 +215,25 @@ def literature_review():
                 ai_response = st.empty()
 
                 # generate the response for lit review
-                response = chat_completion(
+                response = ai_completion(
                     messages=prompt,
                     model=st.session_state.selected_model,
                     temperature=st.session_state.temperature,
-                    max_tokens=int(st.session_state.max_words * 4/3),
-                    stream=True
+                    max_tokens=1500,
+                    stream=True,
                 )
-
-                # stream the response
                 collected_chunks = []
                 report = []
-                for chunk in response:
-                    collected_chunks.append(chunk)  # save the event response
-                    if 'content' in chunk['choices'][0]['delta']:
-                        report.append(chunk.choices[0]['delta']['content'])
-                        st.session_state.last_review = "".join(report).strip()
-                        ai_response.markdown(f'{st.session_state.last_review}')
+                for line in response.iter_lines():
+                    if line and 'data' in line.decode('utf-8'):
+                        content = line.decode('utf-8').replace('data: ', '')
+                        if 'content' in content:
+                            message = json.loads(content, strict=False)
+                            collected_chunks.append(message)  # save the event response
+                            report.append(message['choices'][0]['delta']['content'])
+                            st.session_state.last_review = "".join(report).strip()
+                            ai_response.markdown(f'{st.session_state.last_review}')
+
 
                 # create a timestamp variable
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
