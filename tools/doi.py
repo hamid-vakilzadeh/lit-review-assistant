@@ -21,6 +21,10 @@ def get_citation(
     return cn.content_negotiation(ids=doi, format=format, style=style)
 
 
+def get_apa_citation(article: dict):
+    st.session_state.citations[article['id']] = get_citation(article['doi'])
+
+
 def get_journal_from_article(
         article_doi: list,
         limit: int = 20
