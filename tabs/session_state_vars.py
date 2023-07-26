@@ -34,6 +34,13 @@ def ensure_session_state_vars():
     if 'citations' not in st.session_state:
         st.session_state.citations = {}
 
-    # create a state to track the pdf summaries
+    # create a state to track the pdf summaries generated
     if 'pdf_summaries' not in st.session_state:
         st.session_state.pdf_summaries = {}
+
+    # create a state to track the pdf summaries selected for review
+    if 'pdf_summaries_selected' not in st.session_state:
+        st.session_state.pdf_summaries_selected = {}
+
+    if 'included_articles' not in st.session_state:
+        st.session_state.included_articles = {}
