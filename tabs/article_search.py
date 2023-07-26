@@ -3,7 +3,7 @@ import streamlit as st
 from tools import documentSearch
 from tools.ai import ai_completion
 # from tools.createTables import get_journal_names
-from tools.doi import get_citation
+from tools.doi import get_apa_citation
 from pandas import read_csv
 from typing import Optional
 import json
@@ -49,7 +49,7 @@ def generate_completion(article):
     # first get citation for article by doi
     if article['id'] not in st.session_state.citations.keys():
         with st.session_state[f"{article['id']}_container"]:
-            st.session_state.citations[article['id']] = get_citation(article['doi'])
+            get_apa_citation(article)
 
     # add citation to article dict
     article['citation'] = st.session_state.citations.get(article['id'])
@@ -101,7 +101,10 @@ def sort_results(sort_method):
 
 # add to notes
 def add_to_notes(paper):
+    # add article to notes
     st.session_state.notes.append(paper)
+
+    # add article id to added articles
     st.session_state.added_articles.append(paper['id'])
 
 
