@@ -7,8 +7,20 @@ from typing import Optional
 import json
 
 
+# add to notes
+def add_to_lit_review(paper):
+    # add article to lit review studies
+    st.session_state.included_articles.update({paper['id']: paper})
+
+
+# remove from notes
+def remove_from_lit_review(paper):
+    # remove article from lit review studies
+    st.session_state.included_articles.pop(paper['id'])
+
+
 def lit_review_message(
-        articles: list,
+        articles: dict,
         additional_instructions: str,
         number_of_words: Optional[int] = None
 ) -> list:
@@ -23,14 +35,18 @@ def lit_review_message(
     :rtype: list
     """
     all_articles = []
-    for article in articles:
+    for ident, article in articles.items():
         # if citation is not already in the session state, get it
-        if not st.session_state.citations.get(article['id'], None):
+        article_citation = article.get('citation', st.session_state.citations.get(article['id'], None))
+        if not article_citation:
             get_apa_citation(article)
+            article_citation = st.session_state.citations.get(article['id'], None)
+
+        article_text = article.get('summary', article.get('doc', ''))
 
         all_articles.append(
-            f"Summary of {re.sub(r'https.*', '', st.session_state.citations[article['id']]).strip()}:\n "
-            f"{article['doc']}\n"
+            f"Summary of {re.sub(r'https.*', '', article_citation).strip()}:\n "
+            f"{article_text}\n"
         )
 
     all_articles = "\n".join(all_articles)
@@ -104,24 +120,83 @@ def reviews_navigation_buttons():
 
 
 def literature_review():
-    # Selected papers container
+    with st.sidebar:
+        # show dropdown menu to choose articles or pdfs
+        st.selectbox(
+            label="Select articles or notes",
+            options=["Articles", "Notes"],
+            key="articles_or_notes",
+            index=0
+        )
+        if st.session_state.articles_or_notes == "Articles":
+            for article in st.session_state.notes:
+                if article['id'] not in st.session_state.included_articles.keys():
+                    # include in lit review button
+                    st.button(
+                        label="✅ Include in Lit Review",
+                        type="primary",
+                        use_container_width=True,
+                        key=f"include_{article['id']}",
+                        on_click=add_to_lit_review,
+                        args=(article,)
+                    )
+
+                else:
+                    # remove from lit review button
+                    st.button(
+                        label="❌ Remove from Lit Review",
+                        type="secondary",
+                        use_container_width=True,
+                        key=f"remove_{article['id']}",
+                        on_click=remove_from_lit_review,
+                        args=(article,)
+                    )
+                st.markdown(f"{article['doi'].strip()}",)
+                st.markdown(f"**{article['title']}**")
+                st.markdown(f"{article['doc']}")
+                st.markdown("---")
+        else:
+            for doi, article in st.session_state.pdf_summaries_selected.items():
+                if article['id'] not in st.session_state.included_articles.keys():
+                    # include in lit review button
+                    st.button(
+                        label="✅ Include in Lit Review",
+                        type="primary",
+                        use_container_width=True,
+                        key=f"include_{article['id']}",
+                        on_click=add_to_lit_review,
+                        args=(article,)
+                    )
+
+                else:
+                    # remove from lit review button
+                    st.button(
+                        label="❌ Remove from Lit Review",
+                        type="secondary",
+                        use_container_width=True,
+                        key=f"remove_{article['id']}",
+                        on_click=remove_from_lit_review,
+                        args=(article,)
+                    )
+                st.markdown(f"**{article['citation'].strip()}**")
+                st.markdown(f"{article['summary']}")
+                st.markdown("---")
+
     with st.container():
-        st.subheader("Selected Articles")
         # if notes are empty just display a message
-        if 'notes' not in st.session_state or \
-                len(st.session_state.notes) == 0:
-            st.write(
-                "No articles selected. "
-                "Please select articles from the **Articles** tab."
+        if len(st.session_state.included_articles) == 0:
+            st.markdown(
+                "You have not selected anything to include in your review yet. "
+                "You can select articles and notes from the sidebar. "
+                "Use the drop down menu to switch between articles that you"
+                "have found in the **Aritlces** tab and the notes that you have"
+                "taken in the **MyPDF** tab."
             )
 
-        # display the selected articles
-        for article in st.session_state.notes:
-            with st.expander(
-                    label=f"{article['title'].strip()}",
-                    expanded=False
-            ):
-                st.write(f"{article['doc']}")
+        else:
+            st.subheader(f"Included Pieces: {len(st.session_state.included_articles)}")
+
+    st.markdown("---")
 
     # space to provide more instructions to the AI
     with st.container():
@@ -139,12 +214,6 @@ def literature_review():
             key="input",
             height=200,
             label_visibility='collapsed'
-        )
-
-        # create the prompt for the AI
-        prompt = lit_review_message(
-            articles=st.session_state.notes,
-            additional_instructions=user_input
         )
 
         # enable the submit button
@@ -217,6 +286,12 @@ def literature_review():
             # Show nothing if no response is generated
             if st.session_state.lit_review_submit:
                 ai_response = st.empty()
+
+                # create the prompt for the AI
+                prompt = lit_review_message(
+                    articles=st.session_state.included_articles,
+                    additional_instructions=user_input
+                )
 
                 # generate the response for lit review
                 response = ai_completion(
