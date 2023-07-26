@@ -67,7 +67,11 @@ def pdf_search():
 
     # upload the pdf file
     with st.form(key='pdf_analysis'):
-        uploaded_file = st.file_uploader("Upload a PDF file", type=["pdf"], disabled=False)
+        uploaded_file = st.file_uploader(
+            "Upload a PDF file",
+            type=["pdf"],
+            disabled=False,
+        )
 
         # text box for entering the doi
         doi = st.text_input(
@@ -79,9 +83,18 @@ def pdf_search():
         ).strip()
 
         if doi in st.session_state.pdf_summaries.keys():
-            submitted = st.form_submit_button(label='Regenerate Notes', type='secondary')
+            submitted = st.form_submit_button(
+                label='**Regenerate Summary**',
+                type='secondary',
+                use_container_width=True
+            )
         else:
-            submitted = st.form_submit_button(label='Take Notes', type='primary')
+            submitted = st.form_submit_button(
+                label='**Create Summary**',
+                type='primary',
+                use_container_width=True
+
+            )
 
         if submitted:
             try:
@@ -120,6 +133,8 @@ def pdf_search():
                         response_area.markdown(f'{st.session_state.last_response}')
 
             st.session_state.pdf_summaries[doi] = {
+                'doi': doi,
+                'id': ''.join(doi.split("/")[1:]),
                 'citation': this_doi,
                 'summary': st.session_state.last_response
             }
@@ -133,3 +148,38 @@ def pdf_search():
 
         else:
             st.info("Upload a PDF file and click the 'Take Notes' button to get started.")
+
+    if len(st.session_state.pdf_summaries) > 0:
+        # show button to add the article to the pdf summaries
+        if doi not in st.session_state.pdf_summaries_selected.keys():
+            st.button(
+                label="**Keep Summary**",
+                key="keep_pdf_summary",
+                use_container_width=True,
+                type='primary',
+                on_click=lambda: st.session_state.pdf_summaries_selected.update({doi: st.session_state.pdf_summaries[doi]})
+            )
+
+        elif doi in st.session_state.pdf_summaries_selected.keys():
+            # create two columns
+            col1, col2 = st.columns(2)
+            with col1:
+                disabled = False
+                if st.session_state.pdf_summaries_selected.get(doi) == st.session_state.pdf_summaries[doi]:
+                    disabled = True
+                st.button(
+                    label="**Update Summary**",
+                    key="update_pdf_summary",
+                    use_container_width=True,
+                    disabled=disabled,
+                    type='primary',
+                    on_click=lambda: st.session_state.pdf_summaries_selected.update({doi: st.session_state.pdf_summaries[doi]})
+                )
+            with col2:
+                st.button(
+                    label="**Remove Summary**",
+                    key="remove_pdf_summary",
+                    use_container_width=True,
+                    type='secondary',
+                    on_click=lambda: st.session_state.pdf_summaries_selected.pop(doi)
+                )
