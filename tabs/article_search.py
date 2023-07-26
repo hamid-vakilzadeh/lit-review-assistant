@@ -19,7 +19,6 @@ def prep_gpt_summary(
         bullet_point: bool,
         number_of_words: Optional[int] = None
 ) -> list:
-
     if bullet_point:
         summary_style = 'provide a list of 3 to 5 very very short ' \
                         'bullet points of the major points of the study and its findings. ' \
@@ -44,6 +43,42 @@ def prep_gpt_summary(
     ]
 
     return messages
+
+
+def generate_completion(article):
+    # first get citation for article by doi
+    if article['id'] not in st.session_state.citations.keys():
+        with st.session_state[f"{article['id']}_container"]:
+            st.session_state.citations[article['id']] = get_citation(article['doi'])
+
+    # add citation to article dict
+    article['citation'] = st.session_state.citations.get(article['id'])
+
+    # generate the prompt
+    prompt = prep_gpt_summary(
+        article,
+        bullet_point=True,
+        number_of_words=st.session_state.max_words
+    )
+
+    response = ai_completion(
+        messages=prompt,
+        model=st.session_state.selected_model,
+        temperature=st.session_state.temperature,
+        max_tokens=1500,
+        stream=True,
+    )
+    collected_chunks = []
+    report = []
+    for line in response.iter_lines():
+        if line and 'data' in line.decode('utf-8'):
+            content = line.decode('utf-8').replace('data: ', '')
+            if 'content' in content:
+                message = json.loads(content, strict=False)
+                collected_chunks.append(message)  # save the event response
+                report.append(message['choices'][0]['delta']['content'])
+                st.session_state.last_response = "".join(report).strip()
+                yield st.session_state.last_response
 
 
 def sort_results(sort_method):
@@ -125,7 +160,6 @@ def article_search():
         else:
             logical_operator = None
 
-
     left_column, right_column = st.columns(2)
 
     with left_column:
@@ -184,113 +218,126 @@ def article_search():
 
     # display the articles
     for article in st.session_state.relevant_articles:
-        col1, col2 = st.columns([5, 1])
-        with col1:
-            # search the sql database for the article summary/bullet points
-            st.markdown(f"**{article['title']}**, *{article['journal']} {article['year']}* {article['doi']}")
+        # search the sql database for the article summary/bullet points
+        st.markdown(f"**{article['title']}**, *{article['journal']} {article['year']}* {article['doi']}")
 
-            st.session_state[f"{article['id']}_container"] = st.empty()
-            if article['id'] in st.session_state.summaries.keys():
-                st.session_state[f"{article['id']}_container"].markdown(f'{st.session_state.summaries[article["id"]]}')
+        # generate a state for the regerate button
+        if f"regenerate_{article['id']}" not in st.session_state:
+            st.session_state[f"regenerate_{article['id']}"] = False
 
-        with col2:
-            # write journal name
-            st.metric(
-                label='Relevance Score',
-                value=f"{round((1 - round(article['distance'], 2)) * 100)}%"
-            )
+        # write journal name
+        st.markdown(
+            f"**Relevance Score**: *{round((1 - round(article['distance'], 2)) * 100)}%*  "
+            f"| **CrossRef Citations**: *{article['cite_counts']}*"
+        )
 
-            # number of citations
-            st.metric(
-                label='CrossRef Citations',
-                value=f"{article['cite_counts']}"
-            )
+        # two columns for buttons
+        left_column, right_column = st.columns(2)
 
-            if len(st.session_state.relevant_articles) > 0:
-                if article['id'] not in st.session_state.added_articles:
-                    st.button(
-                        label="Add to Notes",
-                        key=article['id'],
-                        help="Add this article to your notes for literature review",
-                        type='primary',
-                        on_click=add_to_notes,
-                        args=(article,)
-                    )
-
-                else:  # if already added to notes
-                    st.button(
-                        label="Remove",
-                        key=article['id'],
-                        help="Remove this article from your notes for literature review",
-                        type='secondary',
-                        on_click=remove_from_notes,
-                        args=(article,)
-                    )
-        st.markdown('---')
-
-    for article in st.session_state.relevant_articles:
-
-        # get summary of the abstract
-        if article['id'] not in st.session_state.summaries.keys():
-            st.session_state[f"{article['id']}_container"].button(
-                label="Get AI Generated Summary",
-                key=f"summarize_{article['id']}",
-                type='secondary'
-            )
-
-            if st.session_state[f"summarize_{article['id']}"]:
-                # get citation from article by doi
-                if article['id'] not in st.session_state.citations.keys():
-                    with st.session_state[f"{article['id']}_container"]:
-                        st.session_state.citations[article['id']] = get_citation(article['doi'])
-
-                article['citation'] = st.session_state.citations.get(article['id'])
-
-                prompt = prep_gpt_summary(
-                    article,
-                    bullet_point=True,
-                    number_of_words=st.session_state.max_words
+        with left_column:
+            # if article is not added to notes show add notes
+            if article['id'] not in st.session_state.added_articles:
+                st.button(
+                    label="Add to Notes",
+                    key=article['id'],
+                    type='primary',
+                    use_container_width=True,
+                    on_click=add_to_notes,
+                    args=(article,)
                 )
 
-                # count the number of tokens in the prompt
+            else:
+                # if already added to notes show remove notes
+                st.button(
+                    label="Remove from Notes",
+                    key=article['id'],
+                    type='secondary',
+                    use_container_width=True,
+                    on_click=remove_from_notes,
+                    args=(article,)
 
+                )
+
+        with right_column:
+            # if article has a summary show regenerate summary
+            if article['id'] in st.session_state.summaries.keys():
+                st.button(
+                    label="Regenerate Summary",
+                    key=f"regenerate_{article['id']}",
+                    type='secondary',
+                    use_container_width=True
+                )
+
+        # radio buttons for abstract or summary
+        index = 0
+
+        # set the default radio button to summary if the regenerate button is clicked
+        if st.session_state[f"regenerate_{article['id']}"]:
+            index = 1
+
+        st.radio(
+            label="Abstract or Summary",
+            options=['Abstract', 'Summary'],
+            key=f"radio_{article['id']}",
+            index=index,
+            horizontal=True,
+            label_visibility='collapsed'
+
+        )
+        # placeholder for summary and abstract
+        st.session_state[f"{article['id']}_container"] = st.empty()
+
+        # if radio button is abstract
+        if st.session_state[f"radio_{article['id']}"] == 'Abstract':
+            st.session_state[f"{article['id']}_container"].markdown(
+                f'{article["doc"]}'
+            )
+        # if radio button is summary
+        if st.session_state[f"radio_{article['id']}"] == 'Summary':
+            if st.session_state[f"regenerate_{article['id']}"]:
+                # stream the summary in the box
                 with st.session_state[f"{article['id']}_container"]:
-                    response = ai_completion(
-                        messages=prompt,
-                        model=st.session_state.selected_model,
-                        temperature=st.session_state.temperature,
-                        max_tokens=1500,
-                        stream=True,
-                    )
-                    collected_chunks = []
-                    report = []
-                    for line in response.iter_lines():
-                        if line and 'data' in line.decode('utf-8'):
-                            content = line.decode('utf-8').replace('data: ', '')
-                            if 'content' in content:
-                                message = json.loads(content, strict=False)
-                                collected_chunks.append(message)  # save the event response
-                                report.append(message['choices'][0]['delta']['content'])
-                                st.session_state.last_response = "".join(report).strip()
-                                st.session_state[f"{article['id']}_container"].markdown(f'{st.session_state.last_response}')
+                    for response_chunk in generate_completion(article=article):
+                        st.session_state[f"{article['id']}_container"].markdown(f'{response_chunk}')
 
+                # save the summary in the session state
                 st.session_state.summaries[article['id']] = st.session_state.last_response
 
-                # delete the last response
+                # delete the last response to avoid contamination
                 st.session_state.pop('last_response', None)
 
-                if st.session_state.selected_model == 'google/palm-2-chat-bison':
+
+            # if summary is already generated show it
+            elif article['id'] in st.session_state.summaries.keys():
+                st.session_state[f"{article['id']}_container"].markdown(
+                    f'{st.session_state.summaries[article["id"]]}'
+                )
+
+            # if not generated show the button
+            elif article['id'] not in st.session_state.summaries.keys():
+                st.session_state[f"{article['id']}_container"].button(
+                    label="Get AI Generated Summary",
+                    key=f"summarize_{article['id']}",
+                    type='secondary'
+                )
+
+                # if button is clicked generate the summary
+                if st.session_state[f"summarize_{article['id']}"]:
+
+                    # stream the summary in the box
+                    with st.session_state[f"{article['id']}_container"]:
+                        for response_chunk in generate_completion(article=article):
+                            st.session_state[f"{article['id']}_container"].markdown(f'{response_chunk}')
+
+                    # save the summary in the session state
+                    st.session_state.summaries[article['id']] = st.session_state.last_response
+
+                    # delete the last response to avoid contamination
+                    st.session_state.pop('last_response', None)
+
+                    # update the session state
                     st.experimental_rerun()
 
-        else:
-            with st.session_state[f"{article['id']}_container"]:
-                st.markdown('**Summary**')
-                st.markdown(
-                    f'{st.session_state.summaries[article["id"]]}')
+        st.markdown('---')
 
-        # Show citation
-        # st.markdown(f"{re.sub(r'https.*', '', article['citation']).strip()}")
-
-
-
-    #st.write(st.session_state)
+    # st.write(st.session_state)
