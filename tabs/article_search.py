@@ -224,7 +224,7 @@ def article_search():
         # search the sql database for the article summary/bullet points
         st.markdown(f"**{article['title']}**, *{article['journal']} {article['year']}* {article['doi']}")
 
-        # generate a state for the regerate button
+        # generate a state for the regenerate button
         if f"regenerate_{article['id']}" not in st.session_state:
             st.session_state[f"regenerate_{article['id']}"] = False
 
