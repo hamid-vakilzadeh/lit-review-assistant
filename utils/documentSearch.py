@@ -90,14 +90,15 @@ def find_docs(
     # return the results in the desired format
     results = []
     for i in range(len(docs['ids'][0])):
-        this_doc = {'doc': docs['documents'][0][i],
+        this_doc = {'text': docs['documents'][0][i],
                     'year': docs['metadatas'][0][i]['year'],
                     'cite_counts': docs['metadatas'][0][i]['cite_counts'],
                     'title': docs['metadatas'][0][i]['title'],
                     'journal': docs['metadatas'][0][i]['journal'],
                     'doi': docs['metadatas'][0][i]['doi'],
                     'id': docs['ids'][0][i],
-                    'distance': docs['distances'][0][i]
+                    'distance': docs['distances'][0][i],
+                    'type': 'abstract'
                     }
         results.append(this_doc)
 
