@@ -78,7 +78,7 @@ def show_sidebar():
         elif st.session_state.articles_or_notes == "PDFs":
             st.markdown("Summaries that you have created in the **MyPDF** tab.")
             for piece in st.session_state.pinned_pdfs:
-                st.markdown(f"**{piece['citation'].strip()}**")
+                st.markdown(f"**{piece['citation'][0].strip()}**")
                 review_action_buttons(piece, st.session_state.pinned_pdfs)
                 st.markdown(f"{piece['prompt']}")
                 st.markdown(f"{piece['text']}")

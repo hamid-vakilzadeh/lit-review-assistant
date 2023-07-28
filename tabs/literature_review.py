@@ -86,7 +86,7 @@ def generate_review(articles, user_input: str):
         messages=prompt,
         model=st.session_state.selected_model,
         temperature=st.session_state.temperature,
-        max_tokens=3000,
+        max_tokens=5000,
         stream=True,
     )
     collected_chunks = []
