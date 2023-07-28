@@ -1,18 +1,36 @@
 import streamlit as st
-from tools.doi import get_citation
+from utils.doi import get_citation
 from pypdf import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
-from tools.ai import ai_completion
+from utils.ai import ai_completion
+from utils.funcs import pin_piece, unpin_piece
 import json
+import time
+import chromadb
+from utils.documentSearch import openai_ef
 
-text_splitter = CharacterTextSplitter(chunk_size=3000, chunk_overlap=0)
+text_splitter = CharacterTextSplitter(
+    separator="\n",
+    chunk_size=2000,
+    chunk_overlap=100
+)
 
 
-def prep_gpt_review(
+@st.cache_resource
+def get_chromadb_running():
+    memory_client = chromadb.Client()
+    # memory_client.delete_collection("pdf")
+    memory_collection = memory_client.get_or_create_collection(
+        "pdf",
+        embedding_function=openai_ef
+    )
+    return memory_collection
+
+
+def pdf_quick_summary(
         document,
         citation,
 ) -> list:
-
     messages = [
         {"role": "system",
          "content": "You are a researcher and you are collecting notes for your literature review."
@@ -27,7 +45,7 @@ def prep_gpt_review(
             ALWAYS use citations following these rules: 
             - Always start with the APA name and year of the paper and make it clear that you talking about this paper
             - Do not use 'this paper' or similar phrases when referring to the current study. Otherwise you will be penalized.
-            - Look for other studies mentioned in this paper. If you find other cited paper, you should attribute relevant part to relevant studies.
+            - If you find other cited paper, you should attribute relevant part to relevant studies.
             - Third, Any other paragraphs that have no citations should be attributed to authors of the current study. 
         
             Please don't provide a conclusion or closing remark, as you are only seeing part of the literature. 
@@ -36,7 +54,55 @@ def prep_gpt_review(
             Begin:
             {document}
             """.format(document=document, citation=citation)
-                                     )
+        )
+         },
+    ]
+
+    return messages
+
+
+def pdf_q_and_a(
+        question,
+        citation,
+        query,
+) -> list:
+    information = "\n".join([f"- {item}" for item in query['documents'][0]])
+
+    messages = [
+        {"role": "system",
+         "content": "You are a researcher and you are collecting notes for your research paper."
+         },
+        {"role": "user", "content": (
+            """
+            The following paragraphs are originally from {citation}.
+
+            You are writing a summary to answer the following question:
+
+            {question}
+            
+            You should answer the questions based on the following information:
+            
+            {information}
+
+            if the answer is not in the information provided, don't make stuff up. Just say I don't know or 
+            I could not find the answer.
+            
+            ALWAYS use citations following these rules: 
+            - Always start with the APA name and year of the paper and make it clear that you the
+            - Do not use 'this paper' or similar phrases when referring to the current study. Otherwise you will be penalized.
+            - If you find other cited paper, you should attribute relevant part to relevant studies.
+            - Third, Any other paragraphs that have no citations should be attributed to authors of the current study. 
+
+            Please don't provide a conclusion or closing remark, as you are only seeing part of the literature. 
+            if you do not follow the above rules, you will be penalized.
+            
+            Use Latex for mathematical equations and symbols, by wrapping them in "$" or "$$" (the "$$" must be on their own lines).
+            use proper formatting to emphasize, italicize or bold the text as necessary.
+
+            Begin:
+            """.format(question=question, citation=citation, information=information)
+
+        )
          },
     ]
 
@@ -45,7 +111,6 @@ def prep_gpt_review(
 
 def get_pdf_text(file) -> []:
     file = PdfReader(file)
-
     # create a vector store
     this_pdf = []
     for page in range(len(file.pages)):
@@ -54,132 +119,298 @@ def get_pdf_text(file) -> []:
         docs = text_splitter.create_documents([this_page])
         for text in docs:
             text.metadata['page_number'] = page
+            text.metadata['part_number'] = docs.index(text)
 
         this_pdf += docs
 
-    return this_pdf
+    return {'texts': this_pdf, 'num_pages': len(file.pages)}
+
+
+def show_pin_buttons(piece, state_var):
+    if piece not in state_var:
+        st.button(
+            label="📌 **pin**",
+            key="pin_pdf_button",
+            use_container_width=True,
+            type='primary',
+            on_click=pin_piece,
+            args=(piece, state_var,)
+        )
+
+    else:
+        st.button(
+            label="↩️ **unpin**",
+            key="unpin_pdf_button",
+            use_container_width=True,
+            type='secondary',
+            on_click=unpin_piece,
+            args=(piece, state_var,)
+        )
+
+
+@st.cache_data(show_spinner="Reading the PDF...")
+def add_docs_to_db(_fulltext, _doi_to_add, _pdf_collection):
+    _pdf_collection.add(
+        documents=[item.page_content for item in _fulltext],
+        metadatas=[{'doi_id': _doi_to_add['doi_id'], **item.metadata} for item in _fulltext],
+        ids=["-".join([_doi_to_add['doi_id'],
+                       'page',
+                       str(item.metadata['page_number']),
+                       str(item.metadata['part_number'])]
+                      ) for item in _fulltext]
+    )
 
 
 def pdf_search():
+    pdf_collection = get_chromadb_running()
+
     st.subheader("PDF Article Search")
     st.write("In this section your can provide your own article in PDF format and"
              "the AI assistant can help you get deeper insights into the article.")
 
+    dois_present = [d.get('doi', None) for d in st.session_state.pdf_history]
+
     # upload the pdf file
-    with st.form(key='pdf_analysis'):
+    with st.form(key='pdf_upload_form', clear_on_submit=True):
         uploaded_file = st.file_uploader(
-            "Upload a PDF file",
+            "Upload your PDF file",
             type=["pdf"],
             disabled=False,
+            key='pdf_file_uploader',
         )
 
         # text box for entering the doi
-        doi = st.text_input(
+        st.text_input(
             label="Enter the DOI of the article",
-            value="",
+            placeholder="e.g.  https://doi.org/10.1111/j.1475-679X.2006.00214.x",
             max_chars=None,
-            key=None,
+            key='pdf_doi_input',
             type='default'
         ).strip()
 
-        if doi in st.session_state.pdf_summaries.keys():
-            submitted = st.form_submit_button(
-                label='**Regenerate Summary**',
-                type='secondary',
-                use_container_width=True
-            )
-        else:
-            submitted = st.form_submit_button(
-                label='**Create Summary**',
-                type='primary',
-                use_container_width=True
+        st.markdown("""
+            PDF file and its DOI are both necessary for generating summaries.
+            Please ensure that the provided DOI is for the selected paper. 
+            **:red[ONLY THE ORIGINAL DOI IS VALID!]** Any other variations (e.g., 
+            through university proxies) would not work.
+            """)
 
-            )
+        # submit button
+        pdf_form_submit = st.form_submit_button(
+            label='➕ **import my PDF**',
+            type='primary',
+            use_container_width=True,
+        )
 
-        if submitted:
-            try:
-                this_doi = get_citation(doi)
-            except Exception as e:
-                st.error(f"The DOI is invalid. Please check the DOI and try again.\n\n {e}")
-                st.stop()
-
-            text = get_pdf_text(uploaded_file)
-            st.markdown(f"**{this_doi. strip()}**")
-            response_area = st.empty()
-
-            # extract the first two pages of the pdf
-            intro = "".join([page.page_content for page in text[:2]])
-            prompt = prep_gpt_review(document=intro, citation=this_doi)
-            # response_area.write(text[0].page_content)
-
-            with response_area.container():
-                response = ai_completion(
-                    messages=prompt,
-                    model=st.session_state.selected_model,
-                    temperature=st.session_state.temperature,
-                    max_tokens=1500,
-                    stream=True,
+        if pdf_form_submit:
+            if uploaded_file is None:
+                st.error(
+                    f"Please upload a pdf file and enter the DOI of the article."
                 )
-            collected_chunks = []
-            report = []
-            for line in response.iter_lines():
-                if line and 'data' in line.decode('utf-8'):
-                    content = line.decode('utf-8').replace('data: ', '')
-                    if 'content' in content:
-                        message = json.loads(content, strict=False)
-                        collected_chunks.append(message)  # save the event response
-                        report.append(message['choices'][0]['delta']['content'])
-                        st.session_state.last_response = "".join(report).strip()
-                        response_area.markdown(f'{st.session_state.last_response}')
+            elif st.session_state.pdf_doi_input in dois_present:
+                st.success(
+                    f"This article has already been uploaded. Please select it from the list below."
+                )
+            else:
+                try:
+                    fulltext = get_pdf_text(uploaded_file)['texts']
+                    # create pdf object to save in the session state
+                    doi_to_add = {
+                        'doi': st.session_state.pdf_doi_input,
+                        'citation': get_citation(st.session_state.pdf_doi_input),
+                        'intro': [page.page_content for page in fulltext[:2]],
+                        'num_pages': get_pdf_text(uploaded_file)['num_pages'],
+                        'id': int(time.time()),
+                        'doi_id': ''.join(st.session_state.pdf_doi_input.split("/")[1:]),
+                        'pieces': []
+                    }
 
-            st.session_state.pdf_summaries[doi] = {
-                'doi': doi,
-                'id': ''.join(doi.split("/")[1:]),
-                'citation': this_doi,
-                'summary': st.session_state.last_response
-            }
+                    dois_present = [d['doi'] for d in st.session_state['pdf_history']]
+                    if doi_to_add not in dois_present:
+                        st.session_state['pdf_history'].append(doi_to_add)
 
-            if st.session_state.selected_model == 'google/palm-2-chat-bison':
+                    # add docs to the chromadb
+                    add_docs_to_db(fulltext, doi_to_add, pdf_collection)
+
+                except Exception as e:
+                    st.error(f"The DOI is invalid. Please check the DOI and try again.\n\n {e}")
+
                 st.experimental_rerun()
 
-        elif doi in st.session_state.pdf_summaries.keys():
-            st.markdown(f"**{st.session_state.pdf_summaries[doi]['citation'].strip()}**")
-            st.markdown(f"{st.session_state.pdf_summaries[doi]['summary'].strip()}")
+    if len(dois_present) > 0:
+        st.info(
+            f"You can ask specific questions about any pdf you uploaded. "
+            f"First, select the article you want to review and start with a "
+            f"**Quick Summary**! or ask a question using the **Q&A** option."
+        )
 
-        else:
-            st.info("Upload a PDF file and click the 'Take Notes' button to get started.")
+        doi = st.selectbox(
+            label="Select the article you want to review",
+            options=dois_present,
+            index=len(dois_present)-1,
+            key='pdf_select_box'
+        )
 
-    if len(st.session_state.pdf_summaries) > 0:
-        # show button to add the article to the pdf summaries
-        if doi not in st.session_state.pdf_summaries_selected.keys():
-            st.button(
-                label="**Keep Summary**",
-                key="keep_pdf_summary",
-                use_container_width=True,
-                type='primary',
-                on_click=lambda: st.session_state.pdf_summaries_selected.update({doi: st.session_state.pdf_summaries[doi]})
+        citation_area = st.empty()
+
+        if doi in dois_present:
+            # get the text from the pdf
+            st.session_state.current_pdf = [d for d in st.session_state.pdf_history if d.get('doi', None) == doi][0]
+
+            # show the number of pages for the pdf
+            # show the citation
+            citation_area.markdown(f"**{st.session_state.current_pdf['citation'].strip()}**")
+
+            # show radio button for quick summary or q&a
+            st.radio(
+                label="Select the type of summary you want",
+                options=['Quick Summary', 'Q&A'],
+                index=0,
+                horizontal=True,
+                key='pdf_summary_type'
             )
 
-        elif doi in st.session_state.pdf_summaries_selected.keys():
-            # create two columns
-            col1, col2 = st.columns(2)
-            with col1:
-                disabled = False
-                if st.session_state.pdf_summaries_selected.get(doi) == st.session_state.pdf_summaries[doi]:
-                    disabled = True
-                st.button(
-                    label="**Update Summary**",
-                    key="update_pdf_summary",
-                    use_container_width=True,
-                    disabled=disabled,
-                    type='primary',
-                    on_click=lambda: st.session_state.pdf_summaries_selected.update({doi: st.session_state.pdf_summaries[doi]})
-                )
-            with col2:
-                st.button(
-                    label="**Remove Summary**",
-                    key="remove_pdf_summary",
-                    use_container_width=True,
-                    type='secondary',
-                    on_click=lambda: st.session_state.pdf_summaries_selected.pop(doi)
-                )
+            if st.session_state.pdf_summary_type == 'Quick Summary':
+                with st.form(key='pdf_qa_form', clear_on_submit=True):
+                    # show a button to start the review
+                    summarize_button = st.form_submit_button(
+                        label="📝 **Quick Summary**",
+                        use_container_width=True,
+                        type='primary',
+                        disabled=False
+                    )
+
+            elif st.session_state.pdf_summary_type == 'Q&A':
+                with st.form(key='pdf_qa_form', clear_on_submit=True):
+                    qa_col1, qa_col2 = st.columns([4, 1])
+                    # show a text input for q&a
+                    qa_col1.text_input(
+                        label="Enter your question here",
+                        placeholder="e.g. What is the main contribution of this paper?",
+                        max_chars=None,
+                        key='pdf_qa_input',
+                        type='default',
+                        label_visibility='collapsed'
+                    ).strip()
+
+                    # show a button to start the review
+                    with qa_col2:
+                        submit_question = st.form_submit_button(
+                            label="🤨 **Ask**",
+                            use_container_width=True,
+                            type='primary',
+                            disabled=False
+                        )
+
+            response_area = st.empty()
+
+            # show a text area for the response
+            if st.session_state.pdf_summary_type == 'Quick Summary':
+                if summarize_button:
+                    # extract the first two pages of the pdf
+
+                    prompt = pdf_quick_summary(
+                        document=st.session_state.current_pdf['intro'],
+                        citation=st.session_state.current_pdf['citation']
+                    )
+                    # response_area.write(text[0].page_content)
+
+                    with response_area.container():
+                        response = ai_completion(
+                            messages=prompt,
+                            model=st.session_state.selected_model,
+                            temperature=st.session_state.temperature,
+                            max_tokens=1500,
+                            stream=True,
+                        )
+                    collected_chunks = []
+                    report = []
+                    for line in response.iter_lines():
+                        if line and 'data' in line.decode('utf-8'):
+                            content = line.decode('utf-8').replace('data: ', '')
+                            if 'content' in content:
+                                message = json.loads(content, strict=False)
+                                collected_chunks.append(message)  # save the event response
+                                report.append(message['choices'][0]['delta']['content'])
+                                st.session_state.last_pdf_response = "".join(report).strip()
+                                response_area.markdown(f'{st.session_state.last_pdf_response}')
+
+                    piece_info = dict(
+                        id=int(time.time()),
+                        citation=st.session_state.current_pdf['citation'],
+                        doi_id=st.session_state.current_pdf['doi_id'],
+                        doi=st.session_state.current_pdf['doi'],
+                        type='summary',
+                        prompt='summary',
+                        text=st.session_state.last_pdf_response
+                    )
+
+                    show_pin_buttons(
+                     piece=piece_info,
+                     state_var=st.session_state.pinned_pdfs,
+                     )
+
+                else:
+                    response_area.warning(
+                        f"When you see a note, you can pin it by clicking on the pin button."
+                        f"otherwise, the summary will be lost."
+                    )
+
+            elif st.session_state.pdf_summary_type == 'Q&A':
+                if submit_question:
+                    if st.session_state.pdf_qa_input != '':
+
+                        query_results = pdf_collection.query(
+                            query_texts=st.session_state.pdf_qa_input,
+                            where={"doi_id": st.session_state.current_pdf['doi_id']},
+                            n_results=3
+                        )
+
+                        prompt = pdf_q_and_a(
+                            query=query_results,
+                            question=st.session_state.pdf_qa_input,
+                            citation=st.session_state.current_pdf['citation']
+                        )
+
+                        with response_area.container():
+                            response = ai_completion(
+                                messages=prompt,
+                                model=st.session_state.selected_model,
+                                temperature=st.session_state.temperature,
+                                max_tokens=1500,
+                                stream=True,
+                            )
+                        collected_chunks = []
+                        report = []
+                        for line in response.iter_lines():
+                            if line and 'data' in line.decode('utf-8'):
+                                content = line.decode('utf-8').replace('data: ', '')
+                                if 'content' in content:
+                                    message = json.loads(content, strict=False)
+                                    collected_chunks.append(message)  # save the event response
+                                    report.append(message['choices'][0]['delta']['content'])
+                                    st.session_state.last_pdf_response = "".join(report).strip()
+                                    response_area.markdown(f'{st.session_state.last_pdf_response}')
+
+                        piece_info = dict(
+                            id=int(time.time()),
+                            citation=st.session_state.current_pdf['citation'],
+                            doi_id=st.session_state.current_pdf['doi_id'],
+                            doi=st.session_state.current_pdf['doi'],
+                            type='Q&A',
+                            prompt=st.session_state.pdf_qa_input,
+                            text=st.session_state.last_pdf_response
+                        )
+
+                        show_pin_buttons(
+                            piece=piece_info,
+                            state_var=st.session_state.pinned_pdfs,
+                        )
+
+                else:
+                    response_area.warning(
+                        f"When you see a summary, you can pin it by clicking on the pin button."
+                        f"otherwise, the summary will be lost."
+                    )
+
+        # st.write(st.session_state.pinned_pdfs)
