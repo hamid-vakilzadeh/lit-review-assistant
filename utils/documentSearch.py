@@ -13,7 +13,7 @@ collection = api.get_collection("langchain", embedding_function=openai_ef)
 
 # TODO: Check the DOI for year = 0
 
-@st.cache_data(show_spinner='searching for relevant articles...')
+@st.cache_data(show_spinner=False)
 def find_docs(
         topic: str,
         year_range: list[int] = None,
@@ -97,7 +97,7 @@ def find_docs(
                     'journal': docs['metadatas'][0][i]['journal'],
                     'doi': docs['metadatas'][0][i]['doi'],
                     'id': docs['ids'][0][i],
-                    'distance': docs['distances'][0][i],
+                    # 'relevance': round((1 - round(docs['distances'][0][i], 2)) * 100),
                     'type': 'abstract'
                     }
         results.append(this_doc)
