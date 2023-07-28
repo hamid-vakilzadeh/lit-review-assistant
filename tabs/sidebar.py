@@ -85,3 +85,9 @@ def show_sidebar():
                 st.markdown("---")
         else:
             st.markdown("Reviews that you have created in the **Literature Review** tab.")
+            for review in st.session_state.pinned_reviews:
+                st.markdown(f"**{review['id']}**")
+                review_action_buttons(review, st.session_state.pinned_reviews)
+                st.markdown(f"{review['text']}")
+                st.markdown("{citations}".format(citations='\n'.join(review['citation'])))
+                st.markdown("---")

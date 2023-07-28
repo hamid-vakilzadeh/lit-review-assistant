@@ -36,7 +36,7 @@ def prep_gpt_summary(
                                      "always use APA style and always mention the citation.\n"
                                      "e.g. ... et al. (2022) find that ... or similar.\n"
                                      f"This is the abstract: {document['text']}\n"
-                                     f"and this is the reference: {document['citation']}\n "
+                                     f"and this is the reference: {document['citation'][0]}\n "
                                      f"Begin\n "
                                      )
          },
@@ -52,7 +52,7 @@ def generate_completion(article):
             get_apa_citation(article)
 
     # add citation to article dict
-    article['citation'] = st.session_state.citations.get(article['id'])
+    article['citation'] = [st.session_state.citations.get(article['id'])]
 
     # generate the prompt
     prompt = prep_gpt_summary(

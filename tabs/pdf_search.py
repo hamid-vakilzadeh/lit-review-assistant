@@ -212,7 +212,7 @@ def pdf_search():
                 # create pdf object to save in the session state
                 doi_to_add = {
                     'doi': st.session_state.pdf_doi_input,
-                    'citation': citation,
+                    'citation': [citation],
                     'intro': [page.page_content for page in fulltext[:2]],
                     'num_pages': get_pdf_text(uploaded_file)['num_pages'],
                     'id': int(time.time()),
@@ -250,7 +250,7 @@ def pdf_search():
 
             # show the number of pages for the pdf
             # show the citation
-            citation_area.markdown(f"**{st.session_state.current_pdf['citation'].strip()}**")
+            citation_area.markdown(f"**{st.session_state.current_pdf['citation'][0].strip()}**")
 
             # show radio button for quick summary or q&a
             st.radio(
@@ -302,7 +302,7 @@ def pdf_search():
 
                     prompt = pdf_quick_summary(
                         document=st.session_state.current_pdf['intro'],
-                        citation=st.session_state.current_pdf['citation']
+                        citation=st.session_state.current_pdf['citation'][0]
                     )
                     # response_area.write(text[0].page_content)
 
@@ -312,7 +312,7 @@ def pdf_search():
                             messages=prompt,
                             model=st.session_state.selected_model,
                             temperature=st.session_state.temperature,
-                            max_tokens=1500,
+                            max_tokens=3000,
                             stream=True,
                         )
                     collected_chunks = []
@@ -371,7 +371,7 @@ def pdf_search():
                                 messages=prompt,
                                 model=st.session_state.selected_model,
                                 temperature=st.session_state.temperature,
-                                max_tokens=1500,
+                                max_tokens=3000,
                                 stream=True,
                             )
                         collected_chunks = []
