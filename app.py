@@ -1,7 +1,7 @@
 import streamlit as st
 from tabs import article_search, literature_review, pdf_search
 from streamlit_pills import pills
-from tabs.session_state_vars import ensure_session_state_vars
+from utils.session_state_vars import ensure_session_state_vars
 
 # ensure the session state variables are created
 ensure_session_state_vars()
