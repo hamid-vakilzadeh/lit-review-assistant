@@ -126,7 +126,7 @@ def get_pdf_text(file) -> []:
     return {'texts': this_pdf, 'num_pages': len(file.pages)}
 
 
-@st.cache_data(show_spinner="Reading the PDF...")
+@st.cache_data(show_spinner=False)
 def add_docs_to_db(_fulltext, _doi_to_add, _pdf_collection):
     _pdf_collection.add(
         documents=[item.page_content for item in _fulltext],
@@ -163,13 +163,16 @@ def pdf_search():
                 key='pdf_file_uploader',
             )
 
+            # 3 columns for submit button
+            s1, s2 = st.columns([5, 1])
             # text box for entering the doi
-            st.text_input(
+            s1.text_input(
                 label="Enter the DOI of the article",
-                placeholder="e.g.  https://doi.org/10.1111/j.1475-679X.2006.00214.x",
+                placeholder="enter the DOI e.g.  https://doi.org/10.1111/j.1475-679X.2006.00214.x",
                 max_chars=None,
                 key='pdf_doi_input',
-                type='default'
+                type='default',
+                label_visibility='collapsed'
             ).strip()
 
             st.markdown("""
@@ -179,38 +182,45 @@ def pdf_search():
                 through university proxies) would not work.
                 """)
 
-            # 3 columns for submit button
-            s1, s2, s3 = st.columns(3)
             # submit button
             with s2:
                 pdf_form_submit = st.form_submit_button(
-                    label='➕ **import my PDF**',
+                    label='**Import**',
                     type='primary',
                     use_container_width=True,
                 )
 
     if pdf_form_submit:
         if uploaded_file is None:
-            st.error(
-                f"Please upload a pdf file and enter the DOI of the article."
+            st.toast(
+                f":red[**Please upload a pdf file and enter the DOI of the article.**]",
+                icon="⚠️",
             )
         elif st.session_state.pdf_doi_input in dois_present:
-            st.success(
-                f"This article has already been uploaded. Please select it from the list below."
+            st.toast(
+                f"**This article has already been imported!**", icon="😎"
             )
         else:
             try:
+                msg = st.toast(
+                    f"**Importing the article. Please wait...**", icon="⌛"
+                )
                 fulltext = get_pdf_text(uploaded_file)['texts']
+                time.sleep(0.5)
+                msg.toast("**getting the citation...**", icon="📑")
+                citation = get_citation(st.session_state.pdf_doi_input)
                 # create pdf object to save in the session state
                 doi_to_add = {
                     'doi': st.session_state.pdf_doi_input,
-                    'citation': get_citation(st.session_state.pdf_doi_input),
+                    'citation': citation,
                     'intro': [page.page_content for page in fulltext[:2]],
                     'num_pages': get_pdf_text(uploaded_file)['num_pages'],
                     'id': int(time.time()),
                     'doi_id': ''.join(st.session_state.pdf_doi_input.split("/")[1:]),
                     'pieces': []
                 }
+
+                msg.toast("**saving the article...**", icon="💾")
 
                 dois_present = [d['doi'] for d in st.session_state['pdf_history']]
                 if doi_to_add not in dois_present:
@@ -219,10 +229,10 @@ def pdf_search():
                 # add docs to the chromadb
                 add_docs_to_db(fulltext, doi_to_add, pdf_collection)
 
-            except Exception as e:
-                st.error(f"The DOI is invalid. Please check the DOI and try again.\n\n {e}")
+                st.experimental_rerun()
 
-            st.experimental_rerun()
+            except Exception as e:
+                st.toast(f"**Invalid DOI. Please check the DOI and try again.**", icon="⛔️")
 
     if len(dois_present) > 0:
         doi = st.selectbox(
@@ -263,7 +273,7 @@ def pdf_search():
 
             elif st.session_state.pdf_summary_type == 'Q&A':
                 with st.form(key='pdf_qa_form', clear_on_submit=True):
-                    qa_col1, qa_col2 = st.columns([4, 1])
+                    qa_col1, qa_col2 = st.columns([5, 1])
                     # show a text input for q&a
                     qa_col1.text_input(
                         label="Enter your question here",
@@ -297,6 +307,7 @@ def pdf_search():
                     # response_area.write(text[0].page_content)
 
                     with response_area.container():
+                        msg = st.toast("AI is thinking...", icon="🧠")
                         response = ai_completion(
                             messages=prompt,
                             model=st.session_state.selected_model,
@@ -307,6 +318,7 @@ def pdf_search():
                     collected_chunks = []
                     report = []
                     for line in response.iter_lines():
+                        msg.toast("AI is talking...", icon="🤖")
                         if line and 'data' in line.decode('utf-8'):
                             content = line.decode('utf-8').replace('data: ', '')
                             if 'content' in content:
@@ -315,6 +327,8 @@ def pdf_search():
                                 report.append(message['choices'][0]['delta']['content'])
                                 st.session_state.last_pdf_response = "".join(report).strip()
                                 response_area.markdown(f'{st.session_state.last_pdf_response}')
+
+                    st.toast("AI is done talking...", icon="✔️")
 
                     piece_info = dict(
                         id=int(time.time()),
@@ -327,8 +341,8 @@ def pdf_search():
                     )
 
                     st.warning(
-                        f"When AI response appears, you can 📌 **pin** it by clicking on the pin button."
-                        f"otherwise, the response will be lost."
+                        f"If you like the response, 📌 **pin** it. "
+                        f"Otherwise, the response will be lost."
                     )
                     show_pin_buttons(
                      piece=piece_info,
@@ -352,6 +366,7 @@ def pdf_search():
                         )
 
                         with response_area.container():
+                            msg = st.toast("AI is thinking...", icon="🧠")
                             response = ai_completion(
                                 messages=prompt,
                                 model=st.session_state.selected_model,
@@ -362,6 +377,7 @@ def pdf_search():
                         collected_chunks = []
                         report = []
                         for line in response.iter_lines():
+                            msg.toast("AI is talking...", icon="🤖")
                             if line and 'data' in line.decode('utf-8'):
                                 content = line.decode('utf-8').replace('data: ', '')
                                 if 'content' in content:
@@ -370,6 +386,8 @@ def pdf_search():
                                     report.append(message['choices'][0]['delta']['content'])
                                     st.session_state.last_pdf_response = "".join(report).strip()
                                     response_area.markdown(f'{st.session_state.last_pdf_response}')
+
+                        st.toast("AI is done talking...", icon="✔️")
 
                         piece_info = dict(
                             id=int(time.time()),
@@ -382,8 +400,8 @@ def pdf_search():
                         )
 
                         st.warning(
-                            f"When AI response appears, you can 📌 **pin** it by clicking on the pin button."
-                            f"otherwise, the response will be lost."
+                            f"If you like the response, 📌 **pin** it. "
+                            f"Otherwise, the response will be lost."
                         )
 
                         show_pin_buttons(
