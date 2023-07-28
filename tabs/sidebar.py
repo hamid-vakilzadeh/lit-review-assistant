@@ -35,12 +35,14 @@ def review_action_buttons(article, state_var):
 def add_to_lit_review(paper):
     # add article to lit review studies
     st.session_state.review_pieces.append(paper)
+    st.toast(f"**Added to 📚 literature review!**", icon="✅")
 
 
 # remove from notes
 def remove_from_lit_review(paper):
     # remove article from lit review studies
     st.session_state.review_pieces.remove(paper)
+    st.toast(f"**Removed from 📚 literature review!**", icon="❌")
 
 
 def show_sidebar():
