@@ -1,9 +1,10 @@
 import re
 import streamlit as st
-from tools import documentSearch
-from tools.ai import ai_completion
+from utils import documentSearch
+from utils.ai import ai_completion
 # from tools.createTables import get_journal_names
-from tools.doi import get_apa_citation
+from utils.doi import get_apa_citation
+from utils.funcs import pin_piece, unpin_piece
 from pandas import read_csv
 from typing import Optional
 import json
@@ -35,7 +36,7 @@ def prep_gpt_summary(
         {"role": "user", "content": (f"{summary_style}"
                                      "always use APA style and always mention the citation.\n"
                                      "e.g. ... et al. (2022) find that ... or similar.\n"
-                                     f"This is the abstract: {document['doc']}\n"
+                                     f"This is the abstract: {document['text']}\n"
                                      f"and this is the reference: {document['citation']}\n "
                                      f"Begin\n "
                                      )
@@ -82,38 +83,21 @@ def generate_completion(article):
 
 
 def sort_results(sort_method):
-    if st.session_state.relevant_articles is not None:
+    if st.session_state.article_search_results is not None:
         if sort_method == 'Relevance':
-            return sorted(st.session_state.relevant_articles,
-                          key=lambda x: x['doc'][1],
+            return sorted(st.session_state.article_search_results,
+                          key=lambda x: x['text'][1],
                           reverse=True)
 
         if sort_method == 'CrossRef Citations':
-            return sorted(st.session_state.relevant_articles,
+            return sorted(st.session_state.article_search_results,
                           key=lambda x: x['cite_counts'],
                           reverse=True)
 
         if sort_method == 'Year':
-            return sorted(st.session_state.relevant_articles,
+            return sorted(st.session_state.article_search_results,
                           key=lambda x: x['year'],
                           reverse=True)
-
-
-# add to notes
-def add_to_notes(paper):
-    # add article to notes
-    st.session_state.notes.append(paper)
-
-    # add article id to added articles
-    st.session_state.added_articles.append(paper['id'])
-
-
-# remove from notes
-def remove_from_notes(paper):
-    st.session_state.notes.remove(paper)
-    st.session_state.added_articles.remove(
-        paper['id']
-    )
 
 
 # update the filter for the search
@@ -207,7 +191,7 @@ def article_search():
         if st.session_state.search.strip() == "":
             st.error("Please enter a search topic")
         else:
-            st.session_state.relevant_articles = documentSearch.find_docs(
+            st.session_state.article_search_results = documentSearch.find_docs(
                 topic=user_input,
                 number_of_docs=st.session_state.number_of_articles,
                 year_range=[st.session_state.year[0], st.session_state.year[1]],
@@ -216,11 +200,11 @@ def article_search():
                 condition=logical_operator
             )
 
-    if len(st.session_state.relevant_articles) == 0:
+    if len(st.session_state.article_search_results) == 0:
         st.info("No articles found. Please try again.")
 
     # display the articles
-    for article in st.session_state.relevant_articles:
+    for article in st.session_state.article_search_results:
         # search the sql database for the article summary/bullet points
         st.markdown(f"**{article['title']}**, *{article['journal']} {article['year']}* {article['doi']}")
 
@@ -239,25 +223,25 @@ def article_search():
 
         with left_column:
             # if article is not added to notes show add notes
-            if article['id'] not in st.session_state.added_articles:
+            if article not in st.session_state.pinned_articles:
                 st.button(
-                    label="Add to Notes",
+                    label="📌 **pin**",
                     key=article['id'],
                     type='primary',
                     use_container_width=True,
-                    on_click=add_to_notes,
-                    args=(article,)
+                    on_click=pin_piece,
+                    args=(article, st.session_state.pinned_articles,)
                 )
 
             else:
                 # if already added to notes show remove notes
                 st.button(
-                    label="Remove from Notes",
+                    label="↩️ **unpin**",
                     key=article['id'],
                     type='secondary',
                     use_container_width=True,
-                    on_click=remove_from_notes,
-                    args=(article,)
+                    on_click=unpin_piece,
+                    args=(article, st.session_state.pinned_articles,)
 
                 )
 
@@ -293,7 +277,7 @@ def article_search():
         # if radio button is abstract
         if st.session_state[f"radio_{article['id']}"] == 'Abstract':
             st.session_state[f"{article['id']}_container"].markdown(
-                f'{article["doc"]}'
+                f'{article["text"]}'
             )
         # if radio button is summary
         if st.session_state[f"radio_{article['id']}"] == 'Summary':
