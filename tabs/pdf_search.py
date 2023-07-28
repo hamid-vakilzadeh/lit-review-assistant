@@ -3,7 +3,7 @@ from utils.doi import get_citation
 from pypdf import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
 from utils.ai import ai_completion
-from utils.funcs import pin_piece, unpin_piece
+from utils.funcs import show_pin_buttons
 import json
 import time
 import chromadb
@@ -126,28 +126,6 @@ def get_pdf_text(file) -> []:
     return {'texts': this_pdf, 'num_pages': len(file.pages)}
 
 
-def show_pin_buttons(piece, state_var):
-    if piece not in state_var:
-        st.button(
-            label="📌 **pin**",
-            key="pin_pdf_button",
-            use_container_width=True,
-            type='primary',
-            on_click=pin_piece,
-            args=(piece, state_var,)
-        )
-
-    else:
-        st.button(
-            label="↩️ **unpin**",
-            key="unpin_pdf_button",
-            use_container_width=True,
-            type='secondary',
-            on_click=unpin_piece,
-            args=(piece, state_var,)
-        )
-
-
 @st.cache_data(show_spinner="Reading the PDF...")
 def add_docs_to_db(_fulltext, _doi_to_add, _pdf_collection):
     _pdf_collection.add(
@@ -165,85 +143,88 @@ def pdf_search():
     pdf_collection = get_chromadb_running()
 
     st.subheader("PDF Article Search")
-    st.write("In this section your can provide your own article in PDF format and"
-             "the AI assistant can help you get deeper insights into the article.")
 
-    dois_present = [d.get('doi', None) for d in st.session_state.pdf_history]
-
-    # upload the pdf file
-    with st.form(key='pdf_upload_form', clear_on_submit=True):
-        uploaded_file = st.file_uploader(
-            "Upload your PDF file",
-            type=["pdf"],
-            disabled=False,
-            key='pdf_file_uploader',
-        )
-
-        # text box for entering the doi
-        st.text_input(
-            label="Enter the DOI of the article",
-            placeholder="e.g.  https://doi.org/10.1111/j.1475-679X.2006.00214.x",
-            max_chars=None,
-            key='pdf_doi_input',
-            type='default'
-        ).strip()
-
-        st.markdown("""
-            PDF file and its DOI are both necessary for generating summaries.
-            Please ensure that the provided DOI is for the selected paper. 
-            **:red[ONLY THE ORIGINAL DOI IS VALID!]** Any other variations (e.g., 
-            through university proxies) would not work.
-            """)
-
-        # submit button
-        pdf_form_submit = st.form_submit_button(
-            label='➕ **import my PDF**',
-            type='primary',
-            use_container_width=True,
-        )
-
-        if pdf_form_submit:
-            if uploaded_file is None:
-                st.error(
-                    f"Please upload a pdf file and enter the DOI of the article."
-                )
-            elif st.session_state.pdf_doi_input in dois_present:
-                st.success(
-                    f"This article has already been uploaded. Please select it from the list below."
-                )
-            else:
-                try:
-                    fulltext = get_pdf_text(uploaded_file)['texts']
-                    # create pdf object to save in the session state
-                    doi_to_add = {
-                        'doi': st.session_state.pdf_doi_input,
-                        'citation': get_citation(st.session_state.pdf_doi_input),
-                        'intro': [page.page_content for page in fulltext[:2]],
-                        'num_pages': get_pdf_text(uploaded_file)['num_pages'],
-                        'id': int(time.time()),
-                        'doi_id': ''.join(st.session_state.pdf_doi_input.split("/")[1:]),
-                        'pieces': []
-                    }
-
-                    dois_present = [d['doi'] for d in st.session_state['pdf_history']]
-                    if doi_to_add not in dois_present:
-                        st.session_state['pdf_history'].append(doi_to_add)
-
-                    # add docs to the chromadb
-                    add_docs_to_db(fulltext, doi_to_add, pdf_collection)
-
-                except Exception as e:
-                    st.error(f"The DOI is invalid. Please check the DOI and try again.\n\n {e}")
-
-                st.experimental_rerun()
-
-    if len(dois_present) > 0:
+    with st.expander("PDF Import Box", expanded=True):
+        st.write("In this section your can provide your own article in PDF format and"
+                 "the AI assistant can help you get deeper insights into the article.")
         st.info(
             f"You can ask specific questions about any pdf you uploaded. "
             f"First, select the article you want to review and start with a "
             f"**Quick Summary**! or ask a question using the **Q&A** option."
         )
+        dois_present = [d.get('doi', None) for d in st.session_state.pdf_history]
 
+        # upload the pdf file
+        with st.form(key='pdf_upload_form', clear_on_submit=True):
+            uploaded_file = st.file_uploader(
+                "Upload your PDF file",
+                type=["pdf"],
+                disabled=False,
+                key='pdf_file_uploader',
+            )
+
+            # text box for entering the doi
+            st.text_input(
+                label="Enter the DOI of the article",
+                placeholder="e.g.  https://doi.org/10.1111/j.1475-679X.2006.00214.x",
+                max_chars=None,
+                key='pdf_doi_input',
+                type='default'
+            ).strip()
+
+            st.markdown("""
+                PDF file and its DOI are both necessary for generating summaries.
+                Please ensure that the provided DOI is for the selected paper. 
+                **:red[ONLY THE ORIGINAL DOI IS VALID!]** Any other variations (e.g., 
+                through university proxies) would not work.
+                """)
+
+            # 3 columns for submit button
+            s1, s2, s3 = st.columns(3)
+            # submit button
+            with s2:
+                pdf_form_submit = st.form_submit_button(
+                    label='➕ **import my PDF**',
+                    type='primary',
+                    use_container_width=True,
+                )
+
+    if pdf_form_submit:
+        if uploaded_file is None:
+            st.error(
+                f"Please upload a pdf file and enter the DOI of the article."
+            )
+        elif st.session_state.pdf_doi_input in dois_present:
+            st.success(
+                f"This article has already been uploaded. Please select it from the list below."
+            )
+        else:
+            try:
+                fulltext = get_pdf_text(uploaded_file)['texts']
+                # create pdf object to save in the session state
+                doi_to_add = {
+                    'doi': st.session_state.pdf_doi_input,
+                    'citation': get_citation(st.session_state.pdf_doi_input),
+                    'intro': [page.page_content for page in fulltext[:2]],
+                    'num_pages': get_pdf_text(uploaded_file)['num_pages'],
+                    'id': int(time.time()),
+                    'doi_id': ''.join(st.session_state.pdf_doi_input.split("/")[1:]),
+                    'pieces': []
+                }
+
+                dois_present = [d['doi'] for d in st.session_state['pdf_history']]
+                if doi_to_add not in dois_present:
+                    st.session_state['pdf_history'].append(doi_to_add)
+
+                # add docs to the chromadb
+                add_docs_to_db(fulltext, doi_to_add, pdf_collection)
+
+            except Exception as e:
+                st.error(f"The DOI is invalid. Please check the DOI and try again.\n\n {e}")
+
+            st.experimental_rerun()
+
+    if len(dois_present) > 0:
         doi = st.selectbox(
             label="Select the article you want to review",
             options=dois_present,
@@ -345,16 +326,14 @@ def pdf_search():
                         text=st.session_state.last_pdf_response
                     )
 
+                    st.warning(
+                        f"When AI response appears, you can 📌 **pin** it by clicking on the pin button."
+                        f"otherwise, the response will be lost."
+                    )
                     show_pin_buttons(
                      piece=piece_info,
                      state_var=st.session_state.pinned_pdfs,
                      )
-
-                else:
-                    response_area.warning(
-                        f"When you see a note, you can pin it by clicking on the pin button."
-                        f"otherwise, the summary will be lost."
-                    )
 
             elif st.session_state.pdf_summary_type == 'Q&A':
                 if submit_question:
@@ -402,15 +381,14 @@ def pdf_search():
                             text=st.session_state.last_pdf_response
                         )
 
+                        st.warning(
+                            f"When AI response appears, you can 📌 **pin** it by clicking on the pin button."
+                            f"otherwise, the response will be lost."
+                        )
+
                         show_pin_buttons(
                             piece=piece_info,
                             state_var=st.session_state.pinned_pdfs,
                         )
-
-                else:
-                    response_area.warning(
-                        f"When you see a summary, you can pin it by clicking on the pin button."
-                        f"otherwise, the summary will be lost."
-                    )
 
         # st.write(st.session_state.pinned_pdfs)
