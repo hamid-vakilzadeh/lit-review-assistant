@@ -4,7 +4,7 @@ import jsonlines
 import streamlit as st
 
 
-@st.cache_data(show_spinner='updating reference in APA format...')
+@st.cache_data(show_spinner=False)
 def get_citation(
         doi: Union[List[str], str],
         format: str = "text",
