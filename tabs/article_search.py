@@ -118,76 +118,76 @@ def article_search():
                 "audit quality and earnings management*). "
                 )
 
-    user_input = st.text_input(
-        label="**Search a Topic**",
-        placeholder="search for a topic, "
-                    "e.g. "
-                    "or 'audit quality and earnings management'",
-        key="search",
-    )
-
-    # find all exact phrase requested
-    logical_operator = None
-    exact_matched = []
-
-    if st.session_state.search.strip() != "":
-        # find exact search matches:
-        pattern = r'"([^"]+)"'
-
-        exact_matched = re.findall(pattern, st.session_state.search)
-
-        # find the condition specified
-        pattern = r'\b(AND|OR)\b'
-
-        # condition specified
-        cond = re.search(pattern, st.session_state.search)
-
-        if cond:
-            logical_operator = cond.group(1)
-        else:
-            logical_operator = None
-
-    left_column, right_column = st.columns(2)
-
-    with left_column:
-        sub_column1, sub_column2 = st.columns([2, 3])
-        with sub_column1:
-            st.session_state.number_of_articles = st.number_input(
-                "**Number of articles**",
-                min_value=1,
-                max_value=100,
-                value=4,
-                step=1,
-                key="num_articles"
-            )
-
-        with sub_column2:
-            # select data range as year
-            st.slider(
-                label="**Year**",
-                min_value=1990,
-                max_value=2023,
-                value=[2000, 2023],
-                step=1,
-                key="year")
-
-    with right_column:
-        st.multiselect(
-            label="**Select Journals** (leave empty for all journals)",
-            options=get_journal_names(),
-            format_func=lambda x: f"{x['journal']} ({x['number_of_articles']} articles)",
-            key='selected_journal',
-            disabled=False
+    with st.form(key="article_search_form"):
+        user_input = st.text_input(
+            label="**Search a Topic**",
+            placeholder="search for a topic, "
+                        "e.g. "
+                        "or 'audit quality and earnings management'",
+            key="search",
         )
-        if len(st.session_state.selected_journal) > 0:
-            my_journals = [{k: v for k, v in d.items() if k != 'number_of_articles'} for d in st.session_state.selected_journal]
-        else:
-            my_journals = None
 
-    if st.button(
-            label="Search",
-            type="primary"
-    ):
+        # find all exact phrase requested
+        logical_operator = None
+        exact_matched = []
+
+        if st.session_state.search.strip() != "":
+            # find exact search matches:
+            pattern = r'"([^"]+)"'
+
+            exact_matched = re.findall(pattern, st.session_state.search)
+
+            # find the condition specified
+            pattern = r'\b(AND|OR)\b'
+
+            # condition specified
+            cond = re.search(pattern, st.session_state.search)
+
+            if cond:
+                logical_operator = cond.group(1)
+            else:
+                logical_operator = None
+
+        left_column, right_column = st.columns(2)
+
+        with left_column:
+            sub_column1, sub_column2 = st.columns([2, 3])
+            with sub_column1:
+                st.session_state.number_of_articles = st.number_input(
+                    "**Number of articles**",
+                    min_value=1,
+                    max_value=100,
+                    value=4,
+                    step=1,
+                    key="num_articles"
+                )
+
+            with sub_column2:
+                # select data range as year
+                st.slider(
+                    label="**Year**",
+                    min_value=1990,
+                    max_value=2023,
+                    value=[2000, 2023],
+                    step=1,
+                    key="year")
+
+        with right_column:
+            st.multiselect(
+                label="**Select Journals** (leave empty for all journals)",
+                options=get_journal_names(),
+                format_func=lambda x: f"{x['journal']} ({x['number_of_articles']} articles)",
+                key='selected_journal',
+                disabled=False
+            )
+            if len(st.session_state.selected_journal) > 0:
+                my_journals = [{k: v for k, v in d.items() if k != 'number_of_articles'} for d in st.session_state.selected_journal]
+            else:
+                my_journals = None
+
+        article_search_button = st.form_submit_button(label="Search", type="primary")
+
+    if article_search_button:
         if st.session_state.search.strip() == "":
             st.error("Please enter a search topic")
         else:
