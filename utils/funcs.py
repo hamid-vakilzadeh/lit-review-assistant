@@ -4,6 +4,7 @@ import streamlit as st
 def pin_piece(piece, state_var):
     # add pieces related to the article
     state_var.append(piece)
+    st.toast(f"**pinned successfully!**", icon="📌")
 
 
 def unpin_piece(article, state_var):
@@ -11,6 +12,7 @@ def unpin_piece(article, state_var):
     state_var.remove(article)
     if article in st.session_state.review_pieces:
         st.session_state.review_pieces.remove(article)
+    st.toast(f"**unpinned successfully!**", icon="↩️")
 
 
 def show_pin_buttons(piece, state_var):
