@@ -1,5 +1,5 @@
 import streamlit as st
-from tabs import article_search, literature_review, pdf_search
+from tabs import article_search, literature_review, pdf_search, sidebar
 from streamlit_pills import pills
 from utils.session_state_vars import ensure_session_state_vars
 
@@ -45,6 +45,8 @@ if __name__ == '__main__':
         page_title="AI Research Assistant",
         page_icon="📚",
     )
+
+    sidebar.show_sidebar()
 
     # display the header and general settings
     with st.container():
