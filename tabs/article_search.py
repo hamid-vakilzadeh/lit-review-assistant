@@ -2,7 +2,6 @@ import re
 import streamlit as st
 from utils import documentSearch
 from utils.ai import ai_completion
-# from tools.createTables import get_journal_names
 from utils.doi import get_apa_citation
 from utils.funcs import pin_piece, unpin_piece
 from pandas import read_csv
@@ -119,34 +118,6 @@ def article_search():
                     "audit quality and earnings management*). "
                     )
         with st.form(key="article_search_form"):
-            user_input = st.text_input(
-                label="**Search a Topic**",
-                placeholder="search for a topic, "
-                            "e.g. "
-                            "or 'audit quality and earnings management'",
-                key="search",
-            )
-
-            # find all exact phrase requested
-            logical_operator = None
-            exact_matched = []
-
-            if st.session_state.search.strip() != "":
-                # find exact search matches:
-                pattern = r'"([^"]+)"'
-
-                exact_matched = re.findall(pattern, st.session_state.search)
-
-                # find the condition specified
-                pattern = r'\b(AND|OR)\b'
-
-                # condition specified
-                cond = re.search(pattern, st.session_state.search)
-
-                if cond:
-                    logical_operator = cond.group(1)
-                else:
-                    logical_operator = None
 
             left_column, right_column = st.columns(2)
 
@@ -186,19 +157,51 @@ def article_search():
                     my_journals = None
 
             # 3 colmns for submit form button
-            s1, s2, s3 = st.columns(3)
+            s1, s2 = st.columns([5, 1])
+
+            user_input = s1.text_input(
+                label="**Search a Topic**",
+                placeholder="search for a topic, "
+                            "e.g. "
+                            "or 'audit quality and earnings management'",
+                key="search",
+                label_visibility="collapsed"
+            )
+
+            # find all exact phrase requested
+            logical_operator = None
+            exact_matched = []
+
+            if st.session_state.search.strip() != "":
+                # find exact search matches:
+                pattern = r'"([^"]+)"'
+
+                exact_matched = re.findall(pattern, st.session_state.search)
+
+                # find the condition specified
+                pattern = r'\b(AND|OR)\b'
+
+                # condition specified
+                cond = re.search(pattern, st.session_state.search)
+
+                if cond:
+                    logical_operator = cond.group(1)
+                else:
+                    logical_operator = None
+
             with s2:
                 article_search_button = st.form_submit_button(
                     label="Search",
                     type="primary",
-                    use_container_width=True
+                    use_container_width=True,
                 )
 
     if article_search_button:
         if st.session_state.search.strip() == "":
-            st.error("Please enter a search topic")
+            st.toast(":red[Please Enter a Search Topic.]", icon="⚠️")
             return
         else:
+            msg = st.toast("Searching for articles...", icon="🔍")
             st.session_state.article_search_results = documentSearch.find_docs(
                 topic=user_input,
                 number_of_docs=st.session_state.number_of_articles,
@@ -207,9 +210,9 @@ def article_search():
                 contains=exact_matched,
                 condition=logical_operator
             )
+            msg.toast(f"Showing **{len(st.session_state.article_search_results)}** articles", icon="📚")
         if len(st.session_state.article_search_results) == 0:
-            st.info("No articles found. Please try again.")
-
+            st.toast("No articles found. Please try again.", icon="❗")
 
     # display the articles
     for article in st.session_state.article_search_results:
@@ -222,8 +225,8 @@ def article_search():
 
         # write journal name
         st.markdown(
-            f"**Relevance Score**: *{round((1 - round(article['distance'], 2)) * 100)}%*  "
-            f"| **CrossRef Citations**: *{article['cite_counts']}*"
+            # f"**Relevance Score**: *{article['relevance']}%* | "
+            f"**CrossRef Citations**: *{article['cite_counts']}*"
         )
 
         # two columns for buttons
@@ -300,7 +303,6 @@ def article_search():
 
                 # delete the last response to avoid contamination
                 st.session_state.pop('last_response', None)
-
 
             # if summary is already generated show it
             elif article['id'] in st.session_state.summaries.keys():
