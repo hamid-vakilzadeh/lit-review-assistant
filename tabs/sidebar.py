@@ -52,22 +52,19 @@ def show_sidebar():
         st.markdown("You can keep track of abstract, summaries, and reviews "
                     "that you pin while you are reviewing the literature. "
                     )
-        st.write(f"Pinned Abstracts: **{len(st.session_state.pinned_articles)}**")
-        st.write(f"Pinned PDF pieces: **{len(st.session_state.pinned_pdfs)}**")
-        st.write(f"Pinned Reviews: **{len(st.session_state.previous_reviews)}**")
-
-        st.markdown("You can also select pieces to include in your literature review.")
-        st.subheader(f"Selected pieces for review: {len(st.session_state.review_pieces)}")
-
-        # show dropdown menu to choose articles or pdfs
-        st.selectbox(
-            label="Select an option to review",
-            options=["Articles", "PDFs", "Reviews"],
-            key="articles_or_notes",
-            index=0
+        st.radio(
+            label="Show Pinned:",
+            options=[
+                f"Abstracts: {len(st.session_state.pinned_articles)}",
+                f"PDF pieces: {len(st.session_state.pinned_pdfs)}",
+                f"Reviews: {len(st.session_state.pinned_reviews)}"
+            ],
+            key="show_pinned",
+            horizontal=True,
         )
+        # st.subheader(f"Selected pieces for review: {len(st.session_state.review_pieces)}")
 
-        if st.session_state.articles_or_notes == "Articles":
+        if st.session_state.show_pinned == f"Abstracts: {len(st.session_state.pinned_articles)}":
             st.markdown("Articles that you have found in the **Articles** tab.")
             for article in st.session_state.pinned_articles:
                 st.markdown(f"**{article['title']}**")
@@ -75,7 +72,7 @@ def show_sidebar():
                 st.markdown(f"{article['doi'].strip()}" ,)
                 st.markdown(f"{article['text']}")
                 st.markdown("---")
-        elif st.session_state.articles_or_notes == "PDFs":
+        elif st.session_state.show_pinned == f"PDF pieces: {len(st.session_state.pinned_pdfs)}":
             st.markdown("Summaries that you have created in the **MyPDF** tab.")
             for piece in st.session_state.pinned_pdfs:
                 st.markdown(f"**{piece['citation'][0].strip()}**")
