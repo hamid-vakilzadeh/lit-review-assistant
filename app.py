@@ -51,7 +51,7 @@ if __name__ == '__main__':
     # display the header and general settings
     with st.container():
         # The header
-        st.header("AI Assistant for accounting research")
+        st.header("AAIRA: Accounting AI Research Assistant")
 
         # choice of the model to use
         choose_model()
