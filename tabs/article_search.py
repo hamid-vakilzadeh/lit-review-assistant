@@ -157,9 +157,20 @@ def article_search():
                     my_journals = None
 
             # 3 colmns for submit form button
+            a1, a2 = st.columns([5, 1])
+
+            a1.text_input(
+                label="**author name**",
+                placeholder=" author search (coming soon...)",
+                key="author_search",
+                label_visibility="collapsed",
+                disabled=True
+            )
+
+            # 3 colmns for submit form button
             s1, s2 = st.columns([5, 1])
 
-            user_input = s1.text_input(
+            s1.text_input(
                 label="**Search a Topic**",
                 placeholder="search for a topic, "
                             "e.g. "
@@ -203,12 +214,13 @@ def article_search():
         else:
             msg = st.toast("Searching for articles...", icon="🔍")
             st.session_state.article_search_results = documentSearch.find_docs(
-                topic=user_input,
+                topic=st.session_state.search.strip(),
                 number_of_docs=st.session_state.number_of_articles,
                 year_range=[st.session_state.year[0], st.session_state.year[1]],
                 journal=my_journals,
                 contains=exact_matched,
-                condition=logical_operator
+                condition=logical_operator,
+                # author=st.session_state.author_search
             )
             msg.toast(f"Showing **{len(st.session_state.article_search_results)}** articles", icon="📚")
         if len(st.session_state.article_search_results) == 0:
@@ -218,6 +230,8 @@ def article_search():
     for article in st.session_state.article_search_results:
         # search the sql database for the article summary/bullet points
         st.markdown(f"**{article['title']}**, *{article['journal']} {article['year']}* {article['doi']}")
+
+        st.markdown(f"*{article['authors']}*")
 
         # generate a state for the regenerate button
         if f"regenerate_{article['id']}" not in st.session_state:
