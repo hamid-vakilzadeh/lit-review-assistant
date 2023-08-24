@@ -25,6 +25,7 @@ def find_docs(
         journal: list[str] = None,
         contains: list[str] = None,
         condition: str = None,
+        author: str = None,
         number_of_docs: int = 10,
 ) -> list:
     """
@@ -65,12 +66,22 @@ def find_docs(
         ]
         }
 
+    # author search
+    if author:
+        author_cond = {"$contains": author}
+
     # if no contains, just use None
     where_document = None
+
+    # if not contains
+    if not contains and author:
+        where_document = author_cond
 
     # for only one criterion for contains
     if contains and len(contains) == 1:
         where_document = {"$contains": contains[0]}
+        if author:
+            where_document = {"$and": [where_document, author_cond]}
 
     # for multiple criteria for contains
     elif contains:
@@ -79,10 +90,16 @@ def find_docs(
             contains_items.append({"$contains": item})
         if condition == "AND":
             where_document = {"$and": contains_items}
+            if author:
+                where_document["$and"].append(author_cond)
         elif condition == "OR":
             where_document = {"$or": contains_items}
+            if author:
+                where_document = {"$and": [where_document, author_cond]}
         elif not condition:
             where_document = {"$and": contains_items}
+            if author:
+                where_document["$and"].append(author_cond)
 
     # query the database
     docs = collection.query(
@@ -95,13 +112,14 @@ def find_docs(
     # return the results in the desired format
     results = []
     for i in range(len(docs['ids'][0])):
-        this_doc = {'text': docs['documents'][0][i],
+        this_doc = {'text': docs['documents'][0][i].replace(docs['metadatas'][0][i]['authors'], ""),
                     'year': docs['metadatas'][0][i]['year'],
                     'cite_counts': docs['metadatas'][0][i]['cite_counts'],
                     'title': docs['metadatas'][0][i]['title'],
                     'journal': docs['metadatas'][0][i]['journal'],
                     'doi': docs['metadatas'][0][i]['doi'],
                     'id': docs['ids'][0][i],
+                    'authors': docs['metadatas'][0][i]['authors'],
                     # 'relevance': round((1 - round(docs['distances'][0][i], 2)) * 100),
                     'type': 'abstract'
                     }
