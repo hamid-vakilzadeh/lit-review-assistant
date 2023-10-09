@@ -9,3 +9,5 @@ chromadb~=0.4.2
 tiktoken~=0.4.0
 pypdf~=3.13.0
 pysqlite3-binary
+pyrebase4~=4.7.1
+google-cloud-firestore==2.12.0
