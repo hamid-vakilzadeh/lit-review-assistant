@@ -3,7 +3,7 @@ from utils.doi import get_citation
 from pypdf import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
 from utils.ai import ai_completion
-from utils.funcs import show_pin_buttons
+from utils.funcs import show_pin_buttons, add_to_context
 import json
 import time
 import chromadb
@@ -190,187 +190,128 @@ def pdf_search():
                     use_container_width=True,
                 )
 
-    if pdf_form_submit:
-        if uploaded_file is None:
-            st.toast(
-                f":red[**Please upload a pdf file and enter the DOI of the article.**]",
-                icon="⚠️",
-            )
-        elif st.session_state.pdf_doi_input in dois_present:
-            st.toast(
-                f"**This article has already been imported!**", icon="😎"
-            )
-        else:
-            try:
-                msg = st.toast(
-                    f"**Importing the article. Please wait...**", icon="⌛"
+        if pdf_form_submit:
+            if uploaded_file is None:
+                st.toast(
+                    f":red[**Please upload a pdf file and enter the DOI of the article.**]",
+                    icon="⚠️",
                 )
-                fulltext = get_pdf_text(uploaded_file)['texts']
-                time.sleep(0.5)
-                msg.toast("**getting the citation...**", icon="📑")
-                citation = get_citation(st.session_state.pdf_doi_input)
-                # create pdf object to save in the session state
-                doi_to_add = {
-                    'doi': st.session_state.pdf_doi_input,
-                    'citation': [citation],
-                    'intro': [page.page_content for page in fulltext[:2]],
-                    'num_pages': get_pdf_text(uploaded_file)['num_pages'],
-                    'id': int(time.time()),
-                    'doi_id': ''.join(st.session_state.pdf_doi_input.split("/")[1:]),
-                    'pieces': []
-                }
+            elif st.session_state.pdf_doi_input in dois_present:
+                st.toast(
+                    f"**This article has already been imported!**", icon="😎"
+                )
+            else:
+                try:
+                    msg = st.toast(
+                        f"**Importing the article. Please wait...**", icon="⌛"
+                    )
+                    fulltext = get_pdf_text(uploaded_file)['texts']
+                    time.sleep(0.5)
+                    msg.toast("**getting the citation...**", icon="📑")
+                    citation = get_citation(st.session_state.pdf_doi_input)
+                    # create pdf object to save in the session state
+                    doi_to_add = {
+                        'doi': st.session_state.pdf_doi_input,
+                        'citation': [citation],
+                        'intro': [page.page_content for page in fulltext[:2]],
+                        'num_pages': get_pdf_text(uploaded_file)['num_pages'],
+                        'id': int(time.time()),
+                        'doi_id': ''.join(st.session_state.pdf_doi_input.split("/")[1:]),
+                        'pieces': []
+                    }
 
-                msg.toast("**saving the article...**", icon="💾")
+                    msg.toast("**saving the article...**", icon="💾")
 
-                dois_present = [d['doi'] for d in st.session_state['pdf_history']]
-                if doi_to_add not in dois_present:
-                    st.session_state['pdf_history'].append(doi_to_add)
+                    dois_present = [d['doi'] for d in st.session_state['pdf_history']]
+                    if doi_to_add not in dois_present:
+                        st.session_state['pdf_history'].append(doi_to_add)
 
-                # add docs to the chromadb
-                add_docs_to_db(fulltext, doi_to_add, pdf_collection)
+                    # add docs to the chromadb
+                    add_docs_to_db(fulltext, doi_to_add, pdf_collection)
 
-                st.experimental_rerun()
+                    st.rerun()
 
-            except Exception as e:
-                st.toast(f"**Invalid DOI. Please check the DOI and try again.**", icon="⛔️")
+                except Exception as e:
+                    st.toast(f"**Invalid DOI. Please check the DOI and try again.**", icon="⛔️")
 
-    if len(dois_present) > 0:
-        doi = st.selectbox(
-            label="Select the article you want to review",
-            options=dois_present,
-            index=len(dois_present)-1,
-            key='pdf_select_box'
-        )
-
-        citation_area = st.empty()
-
-        if doi in dois_present:
-            # get the text from the pdf
-            st.session_state.current_pdf = [d for d in st.session_state.pdf_history if d.get('doi', None) == doi][0]
-
-            # show the number of pages for the pdf
-            # show the citation
-            citation_area.markdown(f"**{st.session_state.current_pdf['citation'][0].strip()}**")
-
-            # show radio button for quick summary or q&a
-            st.radio(
-                label="Select the type of summary you want",
-                options=['Quick Summary', 'Q&A'],
-                index=0,
-                horizontal=True,
-                key='pdf_summary_type'
+        if len(dois_present) > 0:
+            doi = st.selectbox(
+                label="Select the article you want to review",
+                options=dois_present,
+                index=len(dois_present)-1,
+                key='pdf_select_box'
             )
 
-            if st.session_state.pdf_summary_type == 'Quick Summary':
-                with st.form(key='pdf_qa_form', clear_on_submit=True):
-                    # show a button to start the review
-                    summarize_button = st.form_submit_button(
-                        label="📝 **Quick Summary**",
-                        use_container_width=True,
-                        type='primary',
-                        disabled=False
-                    )
+            citation_area = st.empty()
 
-            elif st.session_state.pdf_summary_type == 'Q&A':
-                with st.form(key='pdf_qa_form', clear_on_submit=True):
-                    qa_col1, qa_col2 = st.columns([5, 1])
-                    # show a text input for q&a
-                    qa_col1.text_input(
-                        label="Enter your question here",
-                        placeholder="e.g. What is the main contribution of this paper?",
-                        max_chars=None,
-                        key='pdf_qa_input',
-                        type='default',
-                        label_visibility='collapsed'
-                    ).strip()
+            if doi in dois_present:
+                # get the text from the pdf
+                st.session_state.current_pdf = [d for d in st.session_state.pdf_history if d.get('doi', None) == doi][0]
 
-                    # show a button to start the review
-                    with qa_col2:
-                        submit_question = st.form_submit_button(
-                            label="🤨 **Ask**",
+                # show the number of pages for the pdf
+                # show the citation
+                citation_area.markdown(f"**{st.session_state.current_pdf['citation'][0].strip()}**")
+
+                # show radio button for quick summary or q&a
+                st.radio(
+                    label="Select the type of summary you want",
+                    options=['Quick Summary', 'Q&A'],
+                    index=0,
+                    horizontal=True,
+                    key='pdf_summary_type'
+                )
+
+                if st.session_state.pdf_summary_type == 'Quick Summary':
+                    with st.form(key='pdf_qa_form', clear_on_submit=True):
+                        # show a button to start the review
+                        summarize_button = st.form_submit_button(
+                            label="📝 **Quick Summary**",
                             use_container_width=True,
                             type='primary',
                             disabled=False
                         )
 
-            response_area = st.empty()
+                elif st.session_state.pdf_summary_type == 'Q&A':
+                    with st.form(key='pdf_qa_form', clear_on_submit=True):
+                        qa_col1, qa_col2 = st.columns([5, 1])
+                        # show a text input for q&a
+                        qa_col1.text_input(
+                            label="Enter your question here",
+                            placeholder="e.g. What is the main contribution of this paper?",
+                            max_chars=None,
+                            key='pdf_qa_input',
+                            type='default',
+                            label_visibility='collapsed'
+                        ).strip()
 
-            # show a text area for the response
-            if st.session_state.pdf_summary_type == 'Quick Summary':
-                if summarize_button:
-                    # extract the first two pages of the pdf
+                        # show a button to start the review
+                        with qa_col2:
+                            submit_question = st.form_submit_button(
+                                label="🤨 **Ask**",
+                                use_container_width=True,
+                                type='primary',
+                                disabled=False
+                            )
 
-                    prompt = pdf_quick_summary(
-                        document=st.session_state.current_pdf['intro'],
-                        citation=st.session_state.current_pdf['citation'][0]
-                    )
-                    # response_area.write(text[0].page_content)
+                response_area = st.empty()
 
-                    with response_area.container():
-                        msg = st.toast("AI is thinking...", icon="🧠")
-                        response = ai_completion(
-                            messages=prompt,
-                            model=st.session_state.selected_model,
-                            temperature=st.session_state.temperature,
-                            max_tokens=3000,
-                            stream=True,
+                # show a text area for the response
+                if st.session_state.pdf_summary_type == 'Quick Summary':
+                    if summarize_button:
+                        # extract the first two pages of the pdf
+
+                        prompt = pdf_quick_summary(
+                            document=st.session_state.current_pdf['intro'],
+                            citation=st.session_state.current_pdf['citation'][0]
                         )
-                    collected_chunks = []
-                    report = []
-                    for line in response.iter_lines():
-                        msg.toast("AI is talking...", icon="🤖")
-                        if line and 'data' in line.decode('utf-8'):
-                            content = line.decode('utf-8').replace('data: ', '')
-                            if 'content' in content:
-                                message = json.loads(content, strict=False)
-                                collected_chunks.append(message)  # save the event response
-                                report.append(message['choices'][0]['delta']['content'])
-                                st.session_state.last_pdf_response = "".join(report).strip()
-                                response_area.markdown(f'{st.session_state.last_pdf_response}')
-
-                    st.toast("AI is done talking...", icon="✔️")
-
-                    piece_info = dict(
-                        id=int(time.time()),
-                        citation=st.session_state.current_pdf['citation'],
-                        doi_id=st.session_state.current_pdf['doi_id'],
-                        doi=st.session_state.current_pdf['doi'],
-                        type='summary',
-                        prompt='summary',
-                        text=st.session_state.last_pdf_response
-                    )
-
-                    st.warning(
-                        f"If you like the response, 📌 **pin** it. "
-                        f"Otherwise, the response will be lost."
-                    )
-                    show_pin_buttons(
-                     piece=piece_info,
-                     state_var=st.session_state.pinned_pdfs,
-                     )
-
-            elif st.session_state.pdf_summary_type == 'Q&A':
-                if submit_question:
-                    if st.session_state.pdf_qa_input != '':
-
-                        query_results = pdf_collection.query(
-                            query_texts=st.session_state.pdf_qa_input,
-                            where={"doi_id": st.session_state.current_pdf['doi_id']},
-                            n_results=3
-                        )
-
-                        prompt = pdf_q_and_a(
-                            query=query_results,
-                            question=st.session_state.pdf_qa_input,
-                            citation=st.session_state.current_pdf['citation']
-                        )
+                        # response_area.write(text[0].page_content)
 
                         with response_area.container():
                             msg = st.toast("AI is thinking...", icon="🧠")
                             response = ai_completion(
                                 messages=prompt,
                                 model=st.session_state.selected_model,
-                                temperature=st.session_state.temperature,
+                                temperature=0.3,  # st.session_state.temperature,
                                 max_tokens=3000,
                                 stream=True,
                             )
@@ -394,8 +335,8 @@ def pdf_search():
                             citation=st.session_state.current_pdf['citation'],
                             doi_id=st.session_state.current_pdf['doi_id'],
                             doi=st.session_state.current_pdf['doi'],
-                            type='Q&A',
-                            prompt=st.session_state.pdf_qa_input,
+                            type='summary',
+                            prompt='summary',
                             text=st.session_state.last_pdf_response
                         )
 
@@ -403,10 +344,83 @@ def pdf_search():
                             f"If you like the response, 📌 **pin** it. "
                             f"Otherwise, the response will be lost."
                         )
-
                         show_pin_buttons(
-                            piece=piece_info,
-                            state_var=st.session_state.pinned_pdfs,
-                        )
+                         piece=piece_info,
+                         state_var=st.session_state.pinned_pdfs,
+                         )
 
-        # st.write(st.session_state.pinned_pdfs)
+                elif st.session_state.pdf_summary_type == 'Q&A':
+                    if submit_question:
+                        if st.session_state.pdf_qa_input != '':
+
+                            query_results = pdf_collection.query(
+                                query_texts=st.session_state.pdf_qa_input,
+                                where={"doi_id": st.session_state.current_pdf['doi_id']},
+                                n_results=3
+                            )
+
+                            prompt = pdf_q_and_a(
+                                query=query_results,
+                                question=st.session_state.pdf_qa_input,
+                                citation=st.session_state.current_pdf['citation']
+                            )
+
+                            with response_area.container():
+                                msg = st.toast("AI is thinking...", icon="🧠")
+                                response = ai_completion(
+                                    messages=prompt,
+                                    model=st.session_state.selected_model,
+                                    temperature=0.3,  # st.session_state.temperature,
+                                    max_tokens=3000,
+                                    stream=True,
+                                )
+                            collected_chunks = []
+                            report = []
+                            for line in response.iter_lines():
+                                msg.toast("AI is talking...", icon="🤖")
+                                if line and 'data' in line.decode('utf-8'):
+                                    content = line.decode('utf-8').replace('data: ', '')
+                                    if 'content' in content:
+                                        message = json.loads(content, strict=False)
+                                        collected_chunks.append(message)  # save the event response
+                                        report.append(message['choices'][0]['delta']['content'])
+                                        st.session_state.last_pdf_response = "".join(report).strip()
+                                        response_area.markdown(f'{st.session_state.last_pdf_response}')
+
+                            st.toast("AI is done talking...", icon="✔️")
+
+                            piece_info = dict(
+                                id=int(time.time()),
+                                citation=st.session_state.current_pdf['citation'],
+                                doi_id=st.session_state.current_pdf['doi_id'],
+                                doi=st.session_state.current_pdf['doi'],
+                                type='Q&A',
+                                prompt=st.session_state.pdf_qa_input,
+                                text=st.session_state.last_pdf_response
+                            )
+
+                            st.warning(
+                                f"If you like the response, 📌 **pin** it. "
+                                f"Otherwise, the response will be lost."
+                            )
+
+                            show_pin_buttons(
+                                piece=piece_info,
+                                state_var=st.session_state.pinned_pdfs,
+                            )
+
+            # show add to context button
+            add_to_context_button_status = True
+            if len(st.session_state.pinned_pdfs) > 0:
+                add_to_context_button_status = False
+
+            st.button(
+                label="Add to Context",
+                key="add_to_context",
+                type='primary',
+                disabled=add_to_context_button_status,
+                use_container_width=True,
+                on_click=add_to_context,
+                args=(st.session_state.pinned_pdfs,),
+            )
+            # st.write(st.session_state.pinned_pdfs)
