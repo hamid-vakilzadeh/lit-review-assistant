@@ -48,3 +48,15 @@ def ensure_session_state_vars():
     # session state for last PDF summary
     if 'last_pdf_summary_response' not in st.session_state:
         st.session_state.last_pdf_summary_response = ''
+
+    if "messages_to_api" not in st.session_state:
+        st.session_state.messages_to_api = [
+            {"role": "system", "content": 'You are a research assistant and you should help '
+                                          'the professor with his research.'
+                                          'You are a research assistant and you should help '
+                                          'the professor with his research. '
+                                          'Your job is to identify themes and write a coherent literature review. '
+                                          'You are encouraged to identify points of tension.\n'
+             }
+        ]
+
