@@ -3,7 +3,7 @@ import streamlit as st
 from utils import documentSearch
 from utils.ai import ai_completion
 from utils.doi import get_apa_citation
-from utils.funcs import pin_piece, unpin_piece, add_to_context
+from utils.funcs import pin_piece, unpin_piece, add_to_context, set_command_none
 from pandas import read_csv
 from typing import Optional
 import json
@@ -351,18 +351,31 @@ def article_search():
 
             st.markdown('---')
 
+        # two columns for buttons
+        left_column, right_column = st.columns(2)
+
         # show add to context button
         add_to_context_button_status = True
         if len(st.session_state.pinned_articles) > 0:
             add_to_context_button_status = False
 
-        st.button(
-            label="Add to Context",
-            key="add_to_context",
-            type='primary',
-            disabled=add_to_context_button_status,
-            use_container_width=True,
-            on_click=add_to_context,
-            args=(st.session_state.pinned_articles,),
-        )
+        with left_column:
+            st.button(
+                label="Add to Context",
+                key="add_to_context",
+                type='secondary',
+                disabled=add_to_context_button_status,
+                use_container_width=True,
+                on_click=add_to_context,
+                args=(st.session_state.pinned_articles,),
+            )
+
+        with right_column:
+            st.button(
+                label="Close search",
+                key="close_search",
+                type='primary',
+                use_container_width=True,
+                on_click=lambda: set_command_none(),
+            )
         # st.write(st.session_state)
