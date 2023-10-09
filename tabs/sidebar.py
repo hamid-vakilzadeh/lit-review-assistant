@@ -45,9 +45,41 @@ def remove_from_lit_review(paper):
     st.toast(f"**Removed from 📚 literature review!**", icon="❌")
 
 
+def choose_model():
+    # Choose the model to use for generating the response
+    chosen_model = st.selectbox(
+        label='Model Name',
+        options=[
+            'OpenAI: GPT-3.5 16K',
+            'OpenAI: GPT-4 32K',
+            'Google: PaLM 2 Bison',
+            'Anthropic: Claude v2',
+            'Anthropic: Claude Instant v1',
+            'Meta: Llama v2 13B Chat',
+            'Meta: Llama v2 70B Chat',
+                 ],
+    )
+
+    if chosen_model == 'OpenAI: GPT-3.5 16K':
+        st.session_state.selected_model = 'openai/gpt-3.5-turbo-16k'
+    if chosen_model == 'OpenAI: GPT-4 32K':
+        st.session_state.selected_model = 'openai/gpt-4-32k'
+    if chosen_model == 'Google: PaLM 2 Bison':
+        st.session_state.selected_model = 'google/palm-2-chat-bison'
+    if chosen_model == 'Anthropic: Claude v2':
+        st.session_state.selected_model = 'anthropic/claude-2'
+    if chosen_model == 'Anthropic: Claude Instant v1':
+        st.session_state.selected_model = 'anthropic/claude-instant-v1'
+    if chosen_model == 'Meta: Llama v2 13B Chat':
+        st.session_state.selected_model = 'meta-llama/llama-2-13b-chat'
+    if chosen_model == 'Meta: Llama v2 70B Chat':
+        st.session_state.selected_model = 'meta-llama/llama-2-70b-chat'
+
+
 def show_sidebar():
     # sidebar
     with st.sidebar:
+        choose_model()
         st.header("📌 My Pinboard")
         st.markdown("You can keep track of abstract, summaries, and reviews "
                     "that you pin while you are reviewing the literature. "
