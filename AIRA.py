@@ -18,11 +18,11 @@ if __name__ == '__main__':
     # display the header and general settings
     with st.container():
         # The header
-        st.header("AAIRA: Accounting AI Research Assistant")
+        st.header("AAIRA: AI Research Assistant")
 
         # The description
         st.markdown(
             """
-            This app is designed to assist accounting researchers in finding and organizing accounting literature.
+            This app is designed to assist researchers in finding and organizing accounting literature.
             """
         )
