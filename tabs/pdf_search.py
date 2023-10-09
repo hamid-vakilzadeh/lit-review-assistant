@@ -3,7 +3,7 @@ from utils.doi import get_citation
 from pypdf import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
 from utils.ai import ai_completion
-from utils.funcs import show_pin_buttons, add_to_context
+from utils.funcs import show_pin_buttons, add_to_context, set_command_none
 import json
 import time
 import chromadb
@@ -409,11 +409,15 @@ def pdf_search():
                                 state_var=st.session_state.pinned_pdfs,
                             )
 
-            # show add to context button
-            add_to_context_button_status = True
-            if len(st.session_state.pinned_pdfs) > 0:
-                add_to_context_button_status = False
+        left_column, right_column = st.columns(2)
 
+        # show add to context button
+        add_to_context_button_status = True
+        if len(st.session_state.pinned_pdfs) > 0:
+            add_to_context_button_status = False
+
+
+        with left_column:
             st.button(
                 label="Add to Context",
                 key="add_to_context",
@@ -423,4 +427,12 @@ def pdf_search():
                 on_click=add_to_context,
                 args=(st.session_state.pinned_pdfs,),
             )
-            # st.write(st.session_state.pinned_pdfs)
+        with right_column:
+            st.button(
+                label="Close search",
+                key="close_search",
+                type='primary',
+                use_container_width=True,
+                on_click=lambda: set_command_none(),
+            )
+        # st.write(st.session_state.pinned_pdfs)
