@@ -4,6 +4,7 @@ import streamlit as st
 def pin_piece(piece, state_var):
     # add pieces related to the article
     state_var.append(piece)
+    st.session_state.review_pieces.append(piece)
     st.toast(f"**pinned successfully!**", icon="📌")
 
 
@@ -56,4 +57,9 @@ def add_to_context(articles):
     st.session_state.pinned_articles = []
     st.session_state.article_search_results = []
     st.session_state.pinned_pdfs = []
+    st.session_state.command = None
     st.toast(f"**added successfully!**", icon="📌")
+
+
+def set_command_none():
+    st.session_state.command = None
