@@ -1,5 +1,6 @@
 import streamlit as st
 from utils.funcs import show_pin_buttons
+from time import time
 
 
 def review_action_buttons(article, state_var):
@@ -43,6 +44,78 @@ def remove_from_lit_review(paper):
     # remove article from lit review studies
     st.session_state.review_pieces.remove(paper)
     st.toast(f"**Removed from 📚 literature review!**", icon="❌")
+
+
+def show_login():
+    with st.form(key='login'):
+        email = st.text_input(label='Enter your email')
+        password = st.text_input(label='Enter your password', type='password')
+        submit_button = st.form_submit_button(
+            label='Submit',
+        )
+
+    if submit_button:
+        try:
+            user = st.session_state.auth.sign_in_with_email_and_password(
+                email=email,
+                password=password
+            )
+            st.session_state.user = user
+            st.session_state.session_start_time = time()
+            st.rerun()
+        except Exception as e:
+            error = e
+            if "EMAIL_NOT_FOUND" in str(error):
+                st.error('Email not found')
+            elif "INVALID_PASSWORD" in str(error):
+                st.error('Invalid password')
+            elif "INVALID_EMAIL" in str(error):
+                st.error('Invalid email')
+            else:
+                st.error(error)
+            st.stop()
+
+
+def show_reset_password():
+    with st.form(key='reset_password'):
+        email = st.text_input(label='Enter your email')
+        submit_button = st.form_submit_button(
+            label='Submit',
+        )
+
+    if submit_button:
+        try:
+            st.session_state.auth.send_password_reset_email(email)
+            st.success('Password reset email sent')
+        except Exception as e:
+            error = e
+            if "EMAIL_NOT_FOUND" in str(error):
+                st.error('Email not found')
+            elif "INVALID_PASSWORD" in str(error):
+                st.error('Invalid password')
+            elif "INVALID_EMAIL" in str(error):
+                st.error('Invalid email')
+            else:
+                st.error(error)
+            st.stop()
+
+
+def login_and_reset_password():
+    login, reset = st.tabs(['Login', 'Reset Password'])
+    with login:
+        show_login()
+    with reset:
+        show_reset_password()
+
+
+def show_logout():
+    st.button(
+        label="Logout",
+        type="primary",
+        use_container_width=True,
+        key="login",
+        on_click=lambda: st.session_state.clear(),
+    )
 
 
 def choose_model():
