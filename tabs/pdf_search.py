@@ -8,6 +8,7 @@ import json
 import time
 import chromadb
 from utils.documentSearch import openai_ef
+from ast import literal_eval
 
 text_splitter = CharacterTextSplitter(
     separator="\n",
@@ -126,6 +127,26 @@ def get_pdf_text(file) -> []:
     return {'texts': this_pdf, 'num_pages': len(file.pages)}
 
 
+def get_citation_from_pdf(pdf) -> str:
+    # combine the first two pages
+    first_two_pages = " ".join([item.page_content for item in pdf['texts'][:2]])
+    prompt = ("generate apa citation from this content which is from the first two pages of a pdf file in a python list where the first "
+              "element is for the bibliography and the second item is for in-line citations, just give me a list and nothing else! Avoid "
+              f"explaining yourself. : {first_two_pages}")
+
+    response = ai_completion(
+        messages=[{"role": "user", "content": prompt}],
+        model='openai/gpt-4',
+        temperature=0,  # st.session_state.temperature,
+        max_tokens=300,
+        stream=False,
+    )
+    citation_from_text = response.json()['choices'][0]['message']['content'].lower()
+    # get citation from text as a list
+    citation_from_text = literal_eval(citation_from_text)
+    return citation_from_text
+
+
 @st.cache_data(show_spinner=False)
 def add_docs_to_db(_fulltext, _doi_to_add, _pdf_collection):
     _pdf_collection.add(
@@ -155,17 +176,25 @@ def pdf_search(show_context: bool = False):
         dois_present = [d.get('doi', None) for d in st.session_state.pdf_history]
 
         # upload the pdf file
-        with st.form(key='pdf_upload_form', clear_on_submit=True):
-            uploaded_file = st.file_uploader(
-                "Upload your PDF file",
-                type=["pdf"],
-                disabled=False,
-                key='pdf_file_uploader',
-            )
+        uploaded_file = st.file_uploader(
+            "Upload your PDF file",
+            type=["pdf"],
+            disabled=False,
+            key='pdf_file_uploader',
+        )
 
-            # 3 columns for submit button
-            s1, s2 = st.columns([5, 1])
-            # text box for entering the doi
+        st.radio(
+            "I have the DOI of the article",
+            options=['No', 'Yes'],
+            key='pdf_doi_radio',
+            horizontal=True
+        )
+
+        # 3 columns for submit button
+        s1, s2 = st.columns([5, 1])
+        # text box for entering the doi
+        if st.session_state.pdf_doi_radio == 'Yes':
+            st.session_state.pop('pdf_doi_input')
             s1.text_input(
                 label="Enter the DOI of the article",
                 placeholder="enter the DOI e.g.  https://doi.org/10.1111/j.1475-679X.2006.00214.x",
@@ -181,14 +210,16 @@ def pdf_search(show_context: bool = False):
                 **:red[ONLY THE ORIGINAL DOI IS VALID!]** Any other variations (e.g., 
                 through university proxies) would not work.
                 """)
+        else:
+            st.session_state.pdf_doi_input = None
 
-            # submit button
-            with s2:
-                pdf_form_submit = st.form_submit_button(
-                    label='**Import**',
-                    type='primary',
-                    use_container_width=True,
-                )
+        # submit button
+        with s2:
+            pdf_form_submit = st.button(
+                label='**Import**',
+                type='primary',
+                use_container_width=True,
+            )
 
         if pdf_form_submit:
             if uploaded_file is None:
@@ -196,6 +227,7 @@ def pdf_search(show_context: bool = False):
                     f":red[**Please upload a pdf file and enter the DOI of the article.**]",
                     icon="⚠️",
                 )
+
             elif st.session_state.pdf_doi_input in dois_present:
                 st.toast(
                     f"**This article has already been imported!**", icon="😎"
@@ -208,15 +240,23 @@ def pdf_search(show_context: bool = False):
                     fulltext = get_pdf_text(uploaded_file)['texts']
                     time.sleep(0.5)
                     msg.toast("**getting the citation...**", icon="📑")
-                    citation = get_citation(st.session_state.pdf_doi_input)
+                    if st.session_state.pdf_doi_input is None:
+                        try:
+                            citation = get_citation_from_pdf(get_pdf_text(uploaded_file))[0]
+                            doi = get_citation_from_pdf(get_pdf_text(uploaded_file))[1]
+                        except:
+                            st.error('could not get citation from pdf')
+                    else:
+                        citation = get_citation(st.session_state.pdf_doi_input)
+                        doi = st.session_state.pdf_doi_input
                     # create pdf object to save in the session state
                     doi_to_add = {
-                        'doi': st.session_state.pdf_doi_input,
+                        'doi': doi,
                         'citation': [citation],
                         'intro': [page.page_content for page in fulltext[:2]],
                         'num_pages': get_pdf_text(uploaded_file)['num_pages'],
                         'id': int(time.time()),
-                        'doi_id': ''.join(st.session_state.pdf_doi_input.split("/")[1:]),
+                        'doi_id': ''.join(doi.split("/")[1:]),
                         'pieces': []
                     }
 
@@ -250,8 +290,7 @@ def pdf_search(show_context: bool = False):
 
                 # show the number of pages for the pdf
                 # show the citation
-                citation_area.markdown(f"**{st.session_state.current_pdf['citation'][0].strip()}**")
-
+                #citation_area.markdown(f"**{st.session_state.current_pdf['citation'][0].strip()}**")
                 # show radio button for quick summary or q&a
                 st.radio(
                     label="Select the type of summary you want",
@@ -437,3 +476,5 @@ def pdf_search(show_context: bool = False):
                     on_click=lambda: set_command_none(),
                 )
         # st.write(st.session_state.pinned_pdfs)
+
+
