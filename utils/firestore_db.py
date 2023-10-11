@@ -1,10 +1,28 @@
 from google.cloud import firestore
 import streamlit as st
+import requests
+import json
 
 
-@st.cache_resource
-def init_firestore_client(json_file):
-    return firestore.Client.from_service_account_json(json_file)
+def create_new_profile(_db, username):
+    user_ref = _db.collection("users").document(username)
+    if not user_ref.get().exists:
+        add_user_to_db(username, _db)
+
+    if not user_ref.get().to_dict():
+        st.session_state.profile_details = {
+            'title': '',
+            'first_name': '',
+            'last_name': '',
+            'position': '',
+            'email': '',
+        }
+        user_ref.update(
+            st.session_state.profile_details
+        )
+
+    else:
+        st.session_state.profile_details = user_ref.get().to_dict()
 
 
 def get_user_messages_ref(_db, username):
@@ -51,5 +69,44 @@ def update_chat(messages_ref, chat_id, message_content):
     )
 
 
+def update_profile_db(username, _db, title, first_name, last_name, position, email):
+    st.session_state.profile_details = {
+        'title': title,
+        'first_name': first_name,
+        'last_name': last_name,
+        'position': position,
+        'email': email,
+    }
+
+    user_ref = _db.collection("users").document(username)
+    user_ref.update(st.session_state.profile_details)
+
+
 def delete_document(messages_ref, message_id):
     messages_ref.document(message_id).delete()
+
+
+def update_password(id_token, new_password):
+    pyrebaseConfig = json.loads(st.secrets["pyrebaseConfig"])
+    api_key = pyrebaseConfig['apiKey']
+    url = f'https://identitytoolkit.googleapis.com/v1/accounts:update?key={api_key}'
+
+    headers = {
+        'Content-Type': 'application/json'
+    }
+
+    data = {
+        "idToken": id_token,
+        "password": new_password,
+        "returnSecureToken": True
+    }
+
+    response = requests.post(url, headers=headers, json=data)
+
+    # Return the JSON response if you want
+    return response.json()
+
+
+def add_user_to_db(username, _db):
+    user_ref = _db.collection("users")
+    return user_ref.document(username).set({})
