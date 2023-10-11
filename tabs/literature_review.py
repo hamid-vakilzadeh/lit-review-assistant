@@ -85,7 +85,7 @@ def generate_review(articles, user_input: str):
     response = ai_completion(
         messages=prompt,
         model=st.session_state.selected_model,
-        temperature=st.session_state.temperature,
+        temperature=0.3,
         max_tokens=5000,
         stream=True,
     )
