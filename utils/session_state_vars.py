@@ -1,4 +1,9 @@
 import streamlit as st
+import json
+import pyrebase
+from google.oauth2 import service_account
+from utils.firestore_db import firestore, create_new_profile, add_user_to_db
+from time import time
 
 
 def ensure_session_state_vars():
@@ -60,3 +65,24 @@ def ensure_session_state_vars():
              }
         ]
 
+    if "db" not in st.session_state:
+        key_dict = json.loads(st.secrets["textkey"])
+        creds = service_account.Credentials.from_service_account_info(key_dict)
+        st.session_state.db = firestore.Client(credentials=creds, project="lit-review-d9a4b")
+
+    if 'firebase' not in st.session_state:
+        pyrebaseConfig = json.loads(st.secrets["pyrebaseConfig"])
+        st.session_state.firebase = pyrebase.initialize_app(pyrebaseConfig)
+
+    if 'auth' not in st.session_state:
+        st.session_state.auth = st.session_state.firebase.auth()
+
+    if 'user' in st.session_state and 'profile_details' not in st.session_state:
+        create_new_profile(st.session_state.db, st.session_state.user['localId'])
+
+    if 'session_start_time' in st.session_state:
+        if time() - st.session_state.session_start_time > 3000:
+            st.session_state.user = st.session_state.auth.refresh(st.session_state.user['refreshToken'])
+
+        elif time() - st.session_state.session_start_time > 3600:
+            st.session_state.clear()
