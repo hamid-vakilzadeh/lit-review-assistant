@@ -86,3 +86,4 @@ def ensure_session_state_vars():
 
         elif time() - st.session_state.session_start_time > 3600:
             st.session_state.clear()
+            st.rerun()
