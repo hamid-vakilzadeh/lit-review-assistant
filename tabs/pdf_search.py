@@ -139,7 +139,7 @@ def add_docs_to_db(_fulltext, _doi_to_add, _pdf_collection):
     )
 
 
-def pdf_search():
+def pdf_search(show_context: bool = False):
     pdf_collection = get_chromadb_running()
 
     st.subheader("PDF Article Search")
@@ -409,30 +409,31 @@ def pdf_search():
                                 state_var=st.session_state.pinned_pdfs,
                             )
 
-        left_column, right_column = st.columns(2)
+        if show_context:
+            left_column, right_column = st.columns(2)
 
-        # show add to context button
-        add_to_context_button_status = True
-        if len(st.session_state.pinned_pdfs) > 0:
-            add_to_context_button_status = False
+            # show add to context button
+            add_to_context_button_status = True
+            if len(st.session_state.pinned_pdfs) > 0:
+                add_to_context_button_status = False
 
 
-        with left_column:
-            st.button(
-                label="Add to Context",
-                key="add_to_context",
-                type='primary',
-                disabled=add_to_context_button_status,
-                use_container_width=True,
-                on_click=add_to_context,
-                args=(st.session_state.pinned_pdfs,),
-            )
-        with right_column:
-            st.button(
-                label="Close search",
-                key="close_search",
-                type='primary',
-                use_container_width=True,
-                on_click=lambda: set_command_none(),
-            )
+            with left_column:
+                st.button(
+                    label="Add to Context",
+                    key="add_to_context",
+                    type='primary',
+                    disabled=add_to_context_button_status,
+                    use_container_width=True,
+                    on_click=add_to_context,
+                    args=(st.session_state.pinned_pdfs,),
+                )
+            with right_column:
+                st.button(
+                    label="Close search",
+                    key="close_search",
+                    type='primary',
+                    use_container_width=True,
+                    on_click=lambda: set_command_none(),
+                )
         # st.write(st.session_state.pinned_pdfs)
