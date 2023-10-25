@@ -56,13 +56,16 @@ def ensure_session_state_vars():
 
     if "messages_to_api" not in st.session_state:
         st.session_state.messages_to_api = [
-            {"role": "system", "content": 'You are a research assistant and you should help '
-                                          'the professor with his research.'
-                                          'You are a research assistant and you should help '
-                                          'the professor with his research. '
-                                          'Your job is to identify themes and write a coherent literature review. '
-                                          'You are encouraged to identify points of tension.\n'
-             }
+            {
+                "role": "system",
+                "content": "You are a research assistant and you should help the professor with their research. "
+                           "You will be provided with documents in the chat and some requests. always refer to the context of the chat "
+                           "for papers. "
+                           "Your task is to answer the question using only the provided research articles and to cite the passage(s) "
+                           "of the document used to answer the question in inline APA style. If the document does not contain the "
+                           "information needed to answer this question then simply write: cannot answer based on the provided "
+                           "documents. If an answer to the question is provided, it must be annotated with a citation. "
+            }
         ]
 
     if "db" not in st.session_state:
