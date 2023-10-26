@@ -156,8 +156,16 @@ def article_search(show_context: bool = False):
                 else:
                     my_journals = None
 
-            # 3 colmns for submit form button
+            # 3 columns for submit form button
             a1, a2 = st.columns([5, 1])
+
+            a1.text_input(
+                label="**DOI**",
+                placeholder="Enter a DOI",
+                key="doi_search",
+                label_visibility="collapsed",
+            )
+
 
             a1.text_input(
                 label="**author name**",
@@ -208,8 +216,8 @@ def article_search(show_context: bool = False):
                 )
 
         if article_search_button:
-            if st.session_state.search.strip() == "":
-                st.toast(":red[Please Enter a Search Topic.]", icon="⚠️")
+            if st.session_state.search.strip() == "" and st.session_state.doi_search.strip() == "":
+                st.toast(":red[Please Enter a Search Topic or a DOI.]", icon="⚠️")
                 return
             else:
                 msg = st.toast("Searching for articles...", icon="🔍")
@@ -217,6 +225,7 @@ def article_search(show_context: bool = False):
                     topic=st.session_state.search.strip(),
                     number_of_docs=st.session_state.number_of_articles,
                     year_range=[st.session_state.year[0], st.session_state.year[1]],
+                    doi=st.session_state.doi_search.strip(),
                     journal=my_journals,
                     contains=exact_matched,
                     condition=logical_operator,
