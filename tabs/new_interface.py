@@ -121,58 +121,61 @@ def new_interface():
 
     with st.container():
         # space to provide more instructions to the AI
-        st.subheader("Literature Review")
         # if notes are empty just display a message
 
-        for message in st.session_state.messages_to_interface:
-            with st.chat_message(message["role"]):
-                st.markdown(message["content"])
+        if st.session_state.command is None:
+            st.subheader("Literature Review")
+            for message in st.session_state.messages_to_interface:
+                with st.chat_message(message["role"]):
+                    st.markdown(message["content"])
+            user_input = st.chat_input("Type a message...")
+            if user_input and user_input.startswith("\\"):
+                if user_input not in ["\\search", "\\pdf", None]:
+                    with st.chat_message("assistant"):
+                        st.error("I'm sorry, I don't understand that command. accepted commands are: "
+                                 "\\search, \\pdf")
+                else:
+                    st.session_state.command = user_input if user_input else None
+                    st.rerun()
 
-        user_input = st.chat_input("Type a message...")
-        if user_input and user_input.startswith("\\"):
-            st.session_state.command = user_input if user_input else None
+            elif user_input:
+                # st.session_state.command = None
+                st.session_state.messages_to_interface.append({"role": "user", "content": user_input})
+                # st.session_state.messages_to_api.append({"role": "user", "content": user_input})
+                with st.chat_message("user"):
+                    st.markdown(user_input)
 
-        elif user_input:
-            st.session_state.command = None
-            st.session_state.messages_to_interface.append({"role": "user", "content": user_input})
-            # st.session_state.messages_to_api.append({"role": "user", "content": user_input})
-            with st.chat_message("user"):
-                st.markdown(user_input)
+                if not st.session_state.review_pieces:
+                    with st.chat_message("assistant"):
+                        st.error("You need to select some articles first or upload a PDF.")
+                else:
+                    with st.chat_message("assistant"):
+                        ai_response = st.empty()
 
-            if not st.session_state.review_pieces:
-                with st.chat_message("assistant"):
-                    st.error("You need to select some articles first or upload a PDF.")
-            else:
-                with st.chat_message("assistant"):
-                    ai_response = st.empty()
+                        msg = st.toast("AI is thinking...", icon="🧠")
+                        for response_chunk in chat_response(
+                                instructions=user_input,
+                        ):
+                            msg.toast("AI is talking...", icon="🤖")
+                            ai_response.markdown(f'{response_chunk}')
 
-                    msg = st.toast("AI is thinking...", icon="🧠")
-                    for response_chunk in chat_response(
-                            instructions=user_input,
-                    ):
-                        msg.toast("AI is talking...", icon="🤖")
-                        ai_response.markdown(f'{response_chunk}')
+                    st.session_state.messages_to_interface.append({"role": "assistant", "content": response_chunk})
+                    st.session_state.messages_to_api.append({"role": "assistant", "content": response_chunk})
 
-                st.session_state.messages_to_interface.append({"role": "assistant", "content": response_chunk})
-                st.session_state.messages_to_api.append({"role": "assistant", "content": response_chunk})
-
-                update_chat(
-                    chat_id="1",
-                    messages_ref=st.session_state.messages_ref,
-                    message_content=st.session_state.messages_to_interface
-                )
+                    update_chat(
+                        chat_id="1",
+                        messages_ref=st.session_state.messages_ref,
+                        message_content=st.session_state.messages_to_interface
+                    )
 
         if st.session_state.command == "\\search":
-            if st.session_state.messages_to_interface[-1]['content'] != "\\search" and user_input:
-                st.session_state.messages_to_interface.append({"role": "user", "content": user_input})
+            # if st.session_state.messages_to_interface[-1]['content'] != "\\search" and user_input:
+            #     st.session_state.messages_to_interface.append({"role": "user", "content": user_input})
             article_search.article_search(show_context=True)
+
         elif st.session_state.command == "\\pdf":
-            if st.session_state.messages_to_interface[-1]['content'] != "\\pdf" and user_input:
-                st.session_state.messages_to_interface.append({"role": "user", "content": user_input})
+            # if st.session_state.messages_to_interface[-1]['content'] != "\\pdf" and user_input:
+            #     st.session_state.messages_to_interface.append({"role": "user", "content": user_input})
             pdf_search.pdf_search(show_context=True)
-        elif st.session_state.command not in ["\\search", "\\pdf", None]:
-            with st.chat_message("assistant"):
-                st.error("I'm sorry, I don't understand that command. accepted commands are: "
-                         "\\search, \\pdf")
 
     # st.write(st.session_state)
