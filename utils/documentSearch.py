@@ -105,10 +105,9 @@ def find_docs(
                     where_document["$and"].append(author_cond)
 
     else:
-        #doi = doi.replace("https://doi.org/", "")
         where = {"doi": {"$eq": str(doi)}}
         where_document = None
-        topic= ' '
+        topic = ' '
 
     # query the database
     docs = collection.query(
