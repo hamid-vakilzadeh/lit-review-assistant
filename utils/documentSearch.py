@@ -23,6 +23,7 @@ def find_docs(
         topic: str,
         year_range: list[int] = None,
         journal: list[str] = None,
+        doi: str = None,
         contains: list[str] = None,
         condition: str = None,
         author: str = None,
@@ -34,72 +35,80 @@ def find_docs(
     :param topic: The topic to search for.
     :param year_range: The range of years to search for.
     :param journal: The list of journals to include in the search.
+    :param doi: The DOI to search for.
     :param contains: The list of exact words/phrases to search for in the document.
     :param condition: The condition to use when searching for the words (only AND/OR).
+    :param author: The author to search for.
     :param number_of_docs: The number of documents to return.
     """
+    if not doi:
+        # always enforce year range
+        year_cond = {"$and": [
+            {"year": {"$gte": year_range[0]}},
+            {"year": {"$lte": year_range[1]}}
+        ]}
 
-    # always enforce year range
-    year_cond = {"$and": [
-        {"year": {"$gte": year_range[0]}},
-        {"year": {"$lte": year_range[1]}}
-    ]}
+        # if no journal, just use year
+        if not journal:
+            where = year_cond
 
-    # if no journal, just use year
-    if not journal:
-        where = year_cond
+        # for only one journal
+        elif len(journal) == 1:
+            where = {"$and": [
+                journal[0],
+                year_cond
+            ]
+            }
 
-    # for only one journal
-    elif len(journal) == 1:
-        where = {"$and": [
-            journal[0],
-            year_cond
-        ]
-        }
+        # for multiple journals
+        else:
+            where = {"$and": [
+                {"$or": journal,
+                 },
+                year_cond
+            ]
+            }
 
-    # for multiple journals
-    else:
-        where = {"$and": [
-            {"$or": journal,
-             },
-            year_cond
-        ]
-        }
-
-    # author search
-    if author:
-        author_cond = {"$contains": author}
-
-    # if no contains, just use None
-    where_document = None
-
-    # if not contains
-    if not contains and author:
-        where_document = author_cond
-
-    # for only one criterion for contains
-    if contains and len(contains) == 1:
-        where_document = {"$contains": contains[0]}
+        # author search
         if author:
-            where_document = {"$and": [where_document, author_cond]}
+            author_cond = {"$contains": author}
 
-    # for multiple criteria for contains
-    elif contains:
-        contains_items = []
-        for item in contains:
-            contains_items.append({"$contains": item})
-        if condition == "AND":
-            where_document = {"$and": contains_items}
-            if author:
-                where_document["$and"].append(author_cond)
-        elif condition == "OR":
-            where_document = {"$or": contains_items}
+        # if no contains, just use None
+        where_document = None
+
+        # if not contains
+        if not contains and author:
+            where_document = author_cond
+
+        # for only one criterion for contains
+        if contains and len(contains) == 1:
+            where_document = {"$contains": contains[0]}
             if author:
                 where_document = {"$and": [where_document, author_cond]}
-        elif not condition:
-            where_document = {"$and": contains_items}
-            if author:
-                where_document["$and"].append(author_cond)
+
+        # for multiple criteria for contains
+        elif contains:
+            contains_items = []
+            for item in contains:
+                contains_items.append({"$contains": item})
+            if condition == "AND":
+                where_document = {"$and": contains_items}
+                if author:
+                    where_document["$and"].append(author_cond)
+            elif condition == "OR":
+                where_document = {"$or": contains_items}
+                if author:
+                    where_document = {"$and": [where_document, author_cond]}
+            elif not condition:
+                where_document = {"$and": contains_items}
+                if author:
+                    where_document["$and"].append(author_cond)
+
+    else:
+        #doi = doi.replace("https://doi.org/", "")
+        where = {"doi": {"$eq": str(doi)}}
+        where_document = None
+        topic= ' '
 
     # query the database
     docs = collection.query(
