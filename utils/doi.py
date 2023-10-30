@@ -2,6 +2,7 @@ from habanero import Crossref, cn
 from typing import List, Union
 import jsonlines
 import streamlit as st
+from bs4 import BeautifulSoup
 
 
 @st.cache_data(show_spinner=False)
@@ -59,6 +60,33 @@ def get_journal_from_article(
     return non_duplicated_items
 
 
+def get_article_with_doi(doi: str) -> dict:
+    cr = Crossref(mailto=st.secrets["crossref_mailto"])
+
+    try:
+        docs = cr.works(doi)
+        soup = BeautifulSoup(docs['message']['abstract'], features="lxml").text
+        authors_dict = docs['message']['author']
+        family_names = []
+        for item in range(len(authors_dict)):
+            family_names.append(authors_dict[item]['family'])
+        article_info = {
+            'text': soup.strip(),
+            'year': str(docs['message']['published']['date-parts'][0][0]).strip(),
+            'cite_counts': '',
+            'title': docs['message']['title'][0].strip(),
+            'journal': docs['message']['container-title'][0].strip(),
+            'doi': docs['message']['URL'].strip(),
+            'id': doi.replace('https://doi.org/', '').replace('/', '-').strip(),
+            'authors': ', '.join(family_names),
+            # 'relevance': round((1 - round(docs['distances'][0][i], 2)) * 100),
+            'type': 'abstract'
+        }
+        return article_info
+    except:
+        raise Exception('Could not find this DOI, if it is very recent, the database may not have it yet.')
+
+
 if __name__ == '__main__':
     cr = Crossref(mailto=st.secrets["crossref_mailto"])
 
@@ -85,3 +113,8 @@ if __name__ == '__main__':
 
     # get available styles
     styles = cn.csl_styles()
+
+    get_citation(doi="https://doi.org/10.2308/TAR-2021-0645")
+    cr = Crossref(mailto=st.secrets["crossref_mailto"])
+    response = cr.works("10.2308/TAR-2021-0645")
+    article = get_article_with_doi("10.2308/TAR-2021-0645")
