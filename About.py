@@ -32,21 +32,29 @@ if __name__ == '__main__':
         with st.sidebar:
             sidebar.show_logout()
 
-        sidebar.show_sidebar()
+        # display the instructions
+        with st.container():
+            st.markdown(
+                """
+                ### Instructions
+                instructions go here
+                """
+            )
+        # sidebar.show_sidebar()
 
-        article_search_tab, pdf_tab, literature_review_tab = st.tabs(
-            ["**Articles**", "**My PDFs**", "**Literature Review**"]
-        )
+        # article_search_tab, pdf_tab, literature_review_tab = st.tabs(
+        #    ["**Articles**", "**My PDFs**", "**Literature Review**"]
+        #)
 
 
         # display the Articles Search tab
-        with article_search_tab:
-            article_search.article_search()
+        #with article_search_tab:
+        #    article_search.article_search()
 
         # display the PDF Search (My PDFs) tab
-        with pdf_tab:
-            pdf_search.pdf_search()
+        #with pdf_tab:
+        #    pdf_search.pdf_search()
 
         # display the Literature Review tab
-        with literature_review_tab:
-            literature_review.literature_review()
+        #with literature_review_tab:
+        #    literature_review.literature_review()
