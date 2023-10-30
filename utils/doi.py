@@ -84,7 +84,8 @@ def get_article_with_doi(doi: str) -> dict:
         }
         return article_info
     except Exception:
-        raise 'Error: This article is either too recent paper, or the abstract is not available. if you have the PDF, please upload.'
+        raise Exception('Error: This article is either too recent paper, or the abstract is not available. if you have the PDF, '
+                        'please upload.')
 
 
 if __name__ == '__main__':
