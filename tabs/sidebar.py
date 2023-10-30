@@ -1,7 +1,7 @@
 import streamlit as st
 from utils.funcs import show_pin_buttons
 from time import time
-
+from utils.firestore_db import new_user_request
 
 def review_action_buttons(article, state_var):
     # create 2 columns for the buttons
@@ -47,7 +47,7 @@ def remove_from_lit_review(paper):
 
 
 def show_login():
-    with st.form(key='login', clear_on_submit=True):
+    with st.form(key='login', clear_on_submit=False):
         email = st.text_input(label='Enter your email')
         password = st.text_input(label='Enter your password', type='password')
         submit_button = st.form_submit_button(
@@ -73,6 +73,8 @@ def show_login():
                 st.error('Invalid email')
             elif "INVALID_LOGIN_CREDENTIALS" in str(error):
                 st.error('Invalid login credentials')
+            elif "MISSING_PASSWORD" in str(error):
+                st.error('Please enter your password')
             else:
                 st.error(error)
             # st.stop()
@@ -111,8 +113,7 @@ def request_access():
 
     if submit_button:
         if '@' in email and '.' in email:
-            with open('request_access.txt', 'a') as f:
-                f.write(f'{email}\n')
+            new_user_request(username=email, _db=st.session_state.db)
             st.success('Your request has been submitted. You will receive an email when your account is ready.')
 
         else:
