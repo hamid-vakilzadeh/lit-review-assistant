@@ -13,48 +13,48 @@ if __name__ == '__main__':
         page_icon="📚",
     )
 
-    if 'user' not in st.session_state:
-        sidebar.login_and_reset_password()
+    #if 'user' not in st.session_state:
+        #sidebar.login_and_reset_password()
 
-    else:
+    # else:
 
-        # display the header and general settings
-        with st.container():
-            # The header
-            st.header("AIRA: AI Research Assistant")
+    # display the header and general settings
+    with st.container():
+        # The header
+        st.header("AIRA: AI Research Assistant")
 
-            # The description
-            st.markdown(
-                """
-                This app is designed to assist researchers in finding and organizing accounting literature.
-                """
-            )
-        with st.sidebar:
-            sidebar.show_logout()
+        # The description
+        st.markdown(
+            """
+            This app is designed to assist researchers in finding and organizing accounting literature.
+            """
+        )
+    with st.sidebar:
+        sidebar.show_logout()
 
-        # display the instructions
-        with st.container():
-            st.markdown(
-                """
-                ### Instructions
-                instructions go here
-                """
-            )
-        # sidebar.show_sidebar()
+    # display the instructions
+    with st.container():
+        st.markdown(
+            """
+            ### Instructions
+            instructions go here
+            """
+        )
+    # sidebar.show_sidebar()
 
-        # article_search_tab, pdf_tab, literature_review_tab = st.tabs(
-        #    ["**Articles**", "**My PDFs**", "**Literature Review**"]
-        #)
+    # article_search_tab, pdf_tab, literature_review_tab = st.tabs(
+    #    ["**Articles**", "**My PDFs**", "**Literature Review**"]
+    #)
 
 
-        # display the Articles Search tab
-        #with article_search_tab:
-        #    article_search.article_search()
+    # display the Articles Search tab
+    #with article_search_tab:
+    #    article_search.article_search()
 
-        # display the PDF Search (My PDFs) tab
-        #with pdf_tab:
-        #    pdf_search.pdf_search()
+    # display the PDF Search (My PDFs) tab
+    #with pdf_tab:
+    #    pdf_search.pdf_search()
 
-        # display the Literature Review tab
-        #with literature_review_tab:
-        #    literature_review.literature_review()
+    # display the Literature Review tab
+    #with literature_review_tab:
+    #    literature_review.literature_review()

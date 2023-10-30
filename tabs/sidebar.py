@@ -47,7 +47,7 @@ def remove_from_lit_review(paper):
 
 
 def show_login():
-    with st.form(key='login'):
+    with st.form(key='login', clear_on_submit=True):
         email = st.text_input(label='Enter your email')
         password = st.text_input(label='Enter your password', type='password')
         submit_button = st.form_submit_button(
@@ -71,13 +71,15 @@ def show_login():
                 st.error('Invalid password')
             elif "INVALID_EMAIL" in str(error):
                 st.error('Invalid email')
+            elif "INVALID_LOGIN_CREDENTIALS" in str(error):
+                st.error('Invalid login credentials')
             else:
                 st.error(error)
-            st.stop()
+            # st.stop()
 
 
 def show_reset_password():
-    with st.form(key='reset_password'):
+    with st.form(key='reset_password', clear_on_submit=True):
         email = st.text_input(label='Enter your email')
         submit_button = st.form_submit_button(
             label='Submit',
@@ -86,7 +88,7 @@ def show_reset_password():
     if submit_button:
         try:
             st.session_state.auth.send_password_reset_email(email)
-            st.success('Password reset email sent')
+            st.success('If the email is a valid username, a password reset email will be sent to the provided address.')
         except Exception as e:
             error = e
             if "EMAIL_NOT_FOUND" in str(error):
@@ -100,12 +102,31 @@ def show_reset_password():
             st.stop()
 
 
+def request_access():
+    with st.form(key='request_access', clear_on_submit=True):
+        email = st.text_input(label='Enter your email')
+        submit_button = st.form_submit_button(
+            label='Submit',
+        )
+
+    if submit_button:
+        if '@' in email and '.' in email:
+            with open('request_access.txt', 'a') as f:
+                f.write(f'{email}\n')
+            st.success('Your request has been submitted. You will receive an email when your account is ready.')
+
+        else:
+            st.error('Invalid email address.')
+
+
 def login_and_reset_password():
-    login, reset = st.tabs(['Login', 'Reset Password'])
+    login, reset, request = st.tabs(['Login', 'Reset Password', 'Request Access'])
     with login:
         show_login()
     with reset:
         show_reset_password()
+    with request:
+        request_access()
 
 
 def show_logout():
