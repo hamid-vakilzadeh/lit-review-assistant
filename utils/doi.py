@@ -83,8 +83,9 @@ def get_article_with_doi(doi: str) -> dict:
             'type': 'abstract'
         }
         return article_info
-    except:
-        raise Exception('Could not find this DOI. If this is a recent paper, the database may not have it yet.')
+    except Exception as e:
+        raise e
+        # raise Exception('Could not find this DOI. If this is a recent paper, the database may not have it yet.')
 
 
 if __name__ == '__main__':
