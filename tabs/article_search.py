@@ -58,13 +58,13 @@ def generate_completion(article):
     prompt = prep_gpt_summary(
         article,
         bullet_point=True,
-        number_of_words=st.session_state.max_words
+        number_of_words=3000
     )
 
     response = ai_completion(
         messages=prompt,
         model=st.session_state.selected_model,
-        temperature=st.session_state.temperature,
+        temperature=0.3,
         max_tokens=1500,
         stream=True,
     )
@@ -166,14 +166,14 @@ def article_search(show_context: bool = False):
                 label_visibility="collapsed",
             )
 
-
-            a1.text_input(
-                label="**author name**",
-                placeholder=" author search (coming soon...)",
-                key="author_search",
-                label_visibility="collapsed",
-                disabled=True
-            )
+            a1.markdown("OR")
+            #a1.text_input(
+            #    label="**author name**",
+            #    placeholder=" author search (coming soon...)",
+            #    key="author_search",
+            #    label_visibility="collapsed",
+            #    disabled=True
+            #)
 
             # 3 colmns for submit form button
             s1, s2 = st.columns([5, 1])
