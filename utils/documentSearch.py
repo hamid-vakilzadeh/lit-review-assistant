@@ -1,4 +1,5 @@
 import streamlit as st
+from utils.doi import get_article_with_doi
 
 __import__('pysqlite3')
 import sys
@@ -9,16 +10,36 @@ from chromadb.utils import embedding_functions
 
 
 openai_ef = embedding_functions.OpenAIEmbeddingFunction(
-    model_name="text-embedding-ada-002"
+    model_name="text-embedding-ada-002",
+    api_key=st.secrets["OPENAI_API_KEY"],
 )
 
 api = chromadb.PersistentClient(path="library")
 collection = api.get_collection("langchain", embedding_function=openai_ef)
 
 
+def found_articles_in_format(docs: dict) -> list:
+    results = []
+    for i in range(len(docs['ids'][0])):
+        this_doc = {'text': docs['documents'][0][i].replace(docs['metadatas'][0][i]['authors'], ""),
+                    'year': docs['metadatas'][0][i]['year'],
+                    'cite_counts': docs['metadatas'][0][i]['cite_counts'],
+                    'title': docs['metadatas'][0][i]['title'],
+                    'journal': docs['metadatas'][0][i]['journal'],
+                    'doi': docs['metadatas'][0][i]['doi'],
+                    'id': docs['ids'][0][i],
+                    'authors': docs['metadatas'][0][i]['authors'],
+                    # 'relevance': round((1 - round(docs['distances'][0][i], 2)) * 100),
+                    'type': 'abstract'
+                    }
+        results.append(this_doc)
+
+    return results
+
 # TODO: Check the DOI for year = 0
 
-@st.cache_data(show_spinner=False)
+
+#@st.cache_data(show_spinner=False)
 def find_docs(
         topic: str,
         year_range: list[int] = None,
@@ -104,33 +125,33 @@ def find_docs(
                 if author:
                     where_document["$and"].append(author_cond)
 
+        # query the database
+        docs = collection.query(
+            query_texts=topic,
+            where=where,
+            where_document=where_document,
+            n_results=number_of_docs,
+        )
+
+        # return the results in the desired format
+        return found_articles_in_format(docs)
+
     else:
         where = {"doi": {"$eq": str(doi)}}
-        where_document = None
         topic = ' '
 
-    # query the database
-    docs = collection.query(
-        query_texts=topic,
-        where=where,
-        where_document=where_document,
-        n_results=number_of_docs,
-    )
+        # query the database
+        docs = collection.query(
+            query_texts=topic,
+            where=where
+        )
 
-    # return the results in the desired format
-    results = []
-    for i in range(len(docs['ids'][0])):
-        this_doc = {'text': docs['documents'][0][i].replace(docs['metadatas'][0][i]['authors'], ""),
-                    'year': docs['metadatas'][0][i]['year'],
-                    'cite_counts': docs['metadatas'][0][i]['cite_counts'],
-                    'title': docs['metadatas'][0][i]['title'],
-                    'journal': docs['metadatas'][0][i]['journal'],
-                    'doi': docs['metadatas'][0][i]['doi'],
-                    'id': docs['ids'][0][i],
-                    'authors': docs['metadatas'][0][i]['authors'],
-                    # 'relevance': round((1 - round(docs['distances'][0][i], 2)) * 100),
-                    'type': 'abstract'
-                    }
-        results.append(this_doc)
-
-    return results
+        if len(docs['documents'][0]) == 0:
+            try:
+                docs = get_article_with_doi(doi)
+                return [docs]
+            except Exception as e:
+                st.error(e)
+                return []
+        else:
+            return found_articles_in_format(docs)
