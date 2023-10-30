@@ -95,7 +95,7 @@ def new_interface():
             st.session_state.messages_to_interface = [
                 {
                     "role": "assistant",
-                    "content": "I am research assistant who can help you with your literature review. "
+                    "content": "I am a research assistant here to help with literature review. "
                                "I can help you find articles, summarize them, and generate a literature review. "
                                "I can also help you with your PDFs. "
                                "You can find articles using the :green[**\\search**] command. "
@@ -108,7 +108,7 @@ def new_interface():
         st.session_state.command = None
 
     with st.sidebar:
-        sidebar.choose_model()
+        # sidebar.choose_model()
 
         # clear chat button
         st.button(
@@ -118,6 +118,8 @@ def new_interface():
             type='secondary',
             on_click=lambda: delete_and_clear(),
         )
+
+        sidebar.show_sidebar()
 
     with st.container():
         # space to provide more instructions to the AI
