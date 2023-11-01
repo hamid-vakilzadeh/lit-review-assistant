@@ -86,8 +86,11 @@ def new_interface():
 
     if "messages_to_interface" not in st.session_state:
         try:
-            st.session_state.messages_to_interface = get_document(
-                st.session_state.messages_ref, "1")['chat']
+            cloud_content = get_document(
+                st.session_state.messages_ref, "1")
+            st.session_state.messages_to_interface = cloud_content['chat']
+            st.session_state.pinned_pdfs = cloud_content['pdfs']
+            st.session_state.pinned_articles = cloud_content['articles']
         except:
             st.session_state.messages_to_interface = []
 
@@ -130,6 +133,8 @@ def new_interface():
             for message in st.session_state.messages_to_interface:
                 with st.chat_message(message["role"]):
                     st.markdown(message["content"])
+
+            st.info(f"articles in context: {len(st.session_state.review_pieces)}")
             user_input = st.chat_input("Type a message...")
             if user_input and user_input.startswith("\\"):
                 if user_input not in ["\\search", "\\pdf", None]:
@@ -167,7 +172,9 @@ def new_interface():
                     update_chat(
                         chat_id="1",
                         messages_ref=st.session_state.messages_ref,
-                        message_content=st.session_state.messages_to_interface
+                        message_content=st.session_state.messages_to_interface,
+                        pinned_articles=st.session_state.pinned_articles,
+                        pinned_pdfs=st.session_state.pinned_pdfs,
                     )
 
         if st.session_state.command == "\\search":
