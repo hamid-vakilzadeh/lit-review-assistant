@@ -104,8 +104,8 @@ def choose_model():
         label='Model Name',
         options=[
             'OpenAI: GPT-3.5 16K',
+            'OpenAI: GPT-3.5 Turbo Instruct',
             'OpenAI: GPT-4 32K',
-            'Google: PaLM 2 Bison',
             'Anthropic: Claude v2',
             'Anthropic: Claude Instant v1',
             'Meta: Llama v2 13B Chat',
@@ -115,10 +115,10 @@ def choose_model():
 
     if chosen_model == 'OpenAI: GPT-3.5 16K':
         st.session_state.selected_model = 'openai/gpt-3.5-turbo-16k'
+    if chosen_model == 'OpenAI: GPT-3.5 Turbo Instruct':
+        st.session_state.selected_model = 'openai/gpt-3.5-turbo-instruct'
     if chosen_model == 'OpenAI: GPT-4 32K':
         st.session_state.selected_model = 'openai/gpt-4-32k'
-    if chosen_model == 'Google: PaLM 2 Bison':
-        st.session_state.selected_model = 'google/palm-2-chat-bison'
     if chosen_model == 'Anthropic: Claude v2':
         st.session_state.selected_model = 'anthropic/claude-2'
     if chosen_model == 'Anthropic: Claude Instant v1':
