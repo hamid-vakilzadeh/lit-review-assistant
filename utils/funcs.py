@@ -43,19 +43,12 @@ def add_to_context(articles):
 
     # selected_articles = []
     for article in articles:
-        if 'authors' in article and 'year' in article:
-            info = f"**From {article['authors']}, {article['year']}** ({article['doi']}): {article['text']}"
-        else:
-            citation = ""
-            if 'citation' in article and article['citation']:
-                citation = article['citation'][0]
-            info = f"**From {citation}** ({article['doi']}): {article['text']}"
+        info, interface_context = prepare_article_for_viewing(article)
 
         # check if info is in the messages to interface content
-        if info not in [message['content'] for message in st.session_state.messages_to_interface]:
-            st.session_state.messages_to_interface.append({"role": "user", "content": info})
-            st.session_state.messages_to_api.append({"role": "user", "content": info})
-
+        if interface_context not in st.session_state.messages_to_interface_context:
+            st.session_state.messages_to_interface_context.append(interface_context)
+            st.session_state.messages_to_api_context.append(info)
 
         # selected_articles.append(info)
 
@@ -104,22 +97,30 @@ def review_action_buttons(article, state_var):
         show_pin_buttons(article, state_var)
 
 
-# add to notes
-def add_to_lit_review(article):
-    # add article to lit review studies
-    st.session_state.review_pieces.append(article)
+def prepare_article_for_viewing(article):
     if 'authors' in article and 'year' in article:
         info = f"**From {article['authors']}, {article['year']}** ({article['doi']}): {article['text']}"
+        interface_context = f"**{article['authors']}, {article['year']}** ({article['doi']})"
     else:
         citation = ""
         if 'citation' in article and article['citation']:
             citation = article['citation'][0]
         info = f"**From {citation}** ({article['doi']}): {article['text']}"
+        interface_context = f"**{citation}** ({article['doi']})"
+    return info, interface_context
+
+
+# add to notes
+def add_to_lit_review(article):
+    # add article to lit review studies
+    st.session_state.review_pieces.append(article)
+    # info is the full article, interface context is only the citation or authors and year
+    info, interface_context = prepare_article_for_viewing(article)
 
     # check if info is in the messages to interface content
-    if info not in [message['content'] for message in st.session_state.messages_to_interface]:
-        st.session_state.messages_to_interface.append({"role": "user", "content": info})
-        st.session_state.messages_to_api.append({"role": "user", "content": info})
+    if interface_context not in st.session_state.messages_to_interface_context:
+        st.session_state.messages_to_interface_context.append(interface_context)
+        st.session_state.messages_to_api_context.append(info)
     st.toast(f"**Added to 📚 literature review!**", icon="✅")
 
 
@@ -127,16 +128,11 @@ def add_to_lit_review(article):
 def remove_from_lit_review(article):
     # remove article from lit review studies
     st.session_state.review_pieces.remove(article)
-    if 'authors' in article and 'year' in article:
-        info = f"**From {article['authors']}, {article['year']}** ({article['doi']}): {article['text']}"
-    else:
-        citation = ""
-        if 'citation' in article and article['citation']:
-            citation = article['citation'][0]
-        info = f"**From {citation}** ({article['doi']}): {article['text']}"
+    # info is the full article, interface context is only the citation or authors and year
+    info, interface_context = prepare_article_for_viewing(article)
 
     # check if info is in the messages to interface content
-    if info in [message['content'] for message in st.session_state.messages_to_interface]:
-        st.session_state.messages_to_interface.remove({"role": "user", "content": info})
-        st.session_state.messages_to_api.remove({"role": "user", "content": info})
+    if interface_context in st.session_state.messages_to_interface_context:
+        st.session_state.messages_to_interface_context.remove(interface_context)
+        st.session_state.messages_to_api_context.remove(info)
     st.toast(f"**Removed from 📚 literature review!**", icon="❌")
