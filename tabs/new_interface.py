@@ -209,4 +209,4 @@ def new_interface():
             #     st.session_state.messages_to_interface.append({"role": "user", "content": user_input})
             pdf_search.pdf_search(show_context=True)
 
-    st.write(st.session_state)
+    # st.write(st.session_state)
