@@ -60,13 +60,19 @@ def ensure_session_state_vars():
                 "role": "system",
                 "content": "You are a research assistant and you should help the professor with their research. "
                            "You will be provided with documents in the chat and some requests. always refer to the context of the chat "
-                           "for papers. "
+                           "for papers. Focus on the papers that the user provides as they change. Apologies are not necessary. "
                            "Your task is to answer the question using only the provided research articles and to cite the passage(s) "
                            "of the document used to answer the question in inline APA style. If the document does not contain the "
                            "information needed to answer this question then simply write: cannot answer based on the provided "
                            "documents. If an answer to the question is provided, it must be annotated with a citation. "
             }
         ]
+
+    if "messages_to_api_context" not in st.session_state:
+        st.session_state.messages_to_api_context = []
+
+    if "messages_to_interface_context" not in st.session_state:
+        st.session_state.messages_to_interface_context = []
 
     if "db" not in st.session_state:
         key_dict = json.loads(st.secrets["textkey"])
