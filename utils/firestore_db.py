@@ -59,11 +59,15 @@ def add_new_message(messages_ref, title, message_content):
     )
 
 
-def update_chat(messages_ref, chat_id, message_content):
+def update_chat(messages_ref, chat_id, message_content, pinned_articles, pinned_pdfs):
     document_ref = messages_ref.document(chat_id)
     document_ref.set(
         {
             "chat": message_content
+            ,
+            "articles": pinned_articles
+            ,
+            "pdfs": pinned_pdfs
         },
         merge=True
     )
