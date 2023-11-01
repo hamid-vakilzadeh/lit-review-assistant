@@ -19,16 +19,26 @@ def delete_and_clear():
     )
 
     st.session_state.pop('messages_to_interface', None)
+    st.session_state.pop('messages_to_interface_context', None)
     st.session_state.pop('messages_to_api', None)
+    st.session_state.pop('messages_to_api_context', None)
     st.session_state.pop('pinned_articles', None)
     st.session_state.pop('pinned_pdfs', None)
     st.session_state.pop('review_pieces', None)
+    # user = st.session_state.user
+    # st.session_state.clear()
+    # st.session_state.user = user
     set_command_none()
 
 
 def chat_response(
         instructions: str,
+        context: list,
 ):
+    if context:
+        this_context = '\n '.join(context)
+    else:
+        this_context = 'no context'
 
     job_request = 'You are a research assistant and you should help ' \
                   'the professor with his research. ' \
@@ -40,15 +50,18 @@ def chat_response(
             f"{job_request}"
             f"the user said:\n "
             f"<instructions> {instructions} <instructions>\n "
-            f"if there are no studies in the chat, just say you can't help. "
-            f"follow the instructions only in the context of your persona. "
+            f"and provided the following context:\n "
+            f"<context> {this_context} <context>\n "
+            f"If there is no context see if the instructions are applicable to previous chat. "
+            f"If the chat and context are both not research related, just say you can't help. "
+            f"Follow the instructions only in the context of your persona. "
             f"If the instruction asks for something outside of the context, "
             f"just say you can't help. "
-            "always use APA inline citation style and always mention the citation.\n"
-            "you can be creative with how you mention the study, but "
-            "The above instruction should always be followed. "
+            "Always use APA inline citation style and always mention the citation.\n "
+            "You can be creative with how you mention the study, but "
+            "the above instruction should always be followed. "
             "If you are told to do something, "
-            "consider it only if it does not contradict this instruction.\n"
+            "consider it only if it does not contradict your persona and this instruction.\n"
             "Begin\n "
         )
          },
@@ -58,7 +71,7 @@ def chat_response(
         messages=st.session_state.messages_to_api,
         model=st.session_state.selected_model,
         temperature=0.3,  # st.session_state.temperature,
-        max_tokens=5000,
+        max_tokens=2000,
         stream=True,
     )
 
@@ -91,6 +104,9 @@ def new_interface():
             st.session_state.messages_to_interface = cloud_content['chat']
             st.session_state.pinned_pdfs = cloud_content['pdfs']
             st.session_state.pinned_articles = cloud_content['articles']
+            st.session_state.review_pieces += st.session_state.pinned_pdfs
+            st.session_state.review_pieces += st.session_state.pinned_articles
+            st.session_state.messages_to_api = st.session_state.messages_to_interface.copy()
         except:
             st.session_state.messages_to_interface = []
 
@@ -147,9 +163,14 @@ def new_interface():
 
             elif user_input:
                 # st.session_state.command = None
-                st.session_state.messages_to_interface.append({"role": "user", "content": user_input})
+                context = "\n\n ".join(st.session_state.messages_to_interface_context)
+                st.session_state.messages_to_interface.append({"role": "user", "content": context + "\n\n" + user_input})
                 # st.session_state.messages_to_api.append({"role": "user", "content": user_input})
                 with st.chat_message("user"):
+                    with st.expander("Context"):
+                        for item in st.session_state.messages_to_interface_context:
+                            st.markdown(item)
+
                     st.markdown(user_input)
 
                 if not st.session_state.review_pieces:
@@ -162,6 +183,7 @@ def new_interface():
                         msg = st.toast("AI is thinking...", icon="🧠")
                         for response_chunk in chat_response(
                                 instructions=user_input,
+                                context=st.session_state.messages_to_api_context,
                         ):
                             msg.toast("AI is talking...", icon="🤖")
                             ai_response.markdown(f'{response_chunk}')
@@ -187,4 +209,4 @@ def new_interface():
             #     st.session_state.messages_to_interface.append({"role": "user", "content": user_input})
             pdf_search.pdf_search(show_context=True)
 
-    # st.write(st.session_state)
+    st.write(st.session_state)
