@@ -5,6 +5,7 @@ def pin_piece(piece, state_var):
     # add pieces related to the article
     state_var.append(piece)
     st.session_state.review_pieces.append(piece)
+    add_to_context(piece)
     st.toast(f"**pinned successfully!**", icon="📌")
 
 
@@ -14,6 +15,10 @@ def unpin_piece(article, state_var):
     if article in st.session_state.review_pieces:
         remove_from_lit_review(article)
     st.toast(f"**unpinned successfully!**", icon="↩️")
+
+
+def clean_and_close_search():
+    st.session_state.article_search_results = []
 
 
 def show_pin_buttons(piece, state_var):
@@ -38,34 +43,18 @@ def show_pin_buttons(piece, state_var):
         )
 
 
-def add_to_context(articles):
-    # add the article to the context
+def add_to_context(article):
+    info, interface_context = prepare_article_for_viewing(article)
 
-    # selected_articles = []
-    for article in articles:
-        info, interface_context = prepare_article_for_viewing(article)
-
-        # check if info is in the messages to interface content
-        if interface_context not in st.session_state.messages_to_interface_context:
-            st.session_state.messages_to_interface_context.append(interface_context)
-            st.session_state.messages_to_api_context.append(info)
-
-        # selected_articles.append(info)
-
-        #st.session_state.messages_to_interface.append({"role": "user", "content": info})
-        #st.session_state.messages_to_api.append({"role": "user", "content": info})
-    #selected_articles = "\n\n ".join(selected_articles)
-    # st.session_state.messages_to_interface.append({"role": "user", "content": selected_articles})
-    # st.session_state.messages_to_api.append({"role": "user", "content": selected_articles})
-    # st.session_state.pinned_articles = []
-    st.session_state.article_search_results = []
-    # st.session_state.pinned_pdfs = []
-    st.session_state.command = None
-    st.toast(f"**added successfully!**", icon="📌")
+    # check if info is in the messages to interface content
+    if interface_context not in st.session_state.messages_to_interface_context:
+        st.session_state.messages_to_interface_context.append(interface_context)
+        st.session_state.messages_to_api_context.append(info)
 
 
 def set_command_none():
     st.session_state.command = None
+    clean_and_close_search()
 
 
 def set_command_search():
@@ -74,6 +63,7 @@ def set_command_search():
 
 def set_command_pdf():
     st.session_state.command = "\\pdf"
+    clean_and_close_search()
 
 
 def review_action_buttons(article, state_var):
