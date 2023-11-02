@@ -360,35 +360,4 @@ def article_search(show_context: bool = False):
 
             st.markdown('---')
 
-        if show_context:
-            st.markdown('You can renew your search and the pinned items will be saved. '
-                        'When you are finished, click on the button below to add the articles to your chat.'
-                        )
-            # two columns for buttons
-            left_column, right_column = st.columns(2)
-
-            # show add to context button
-            add_to_context_button_status = True
-            if len(st.session_state.pinned_articles) > 0:
-                add_to_context_button_status = False
-
-            with left_column:
-                st.button(
-                    label="✅ Add and Go to Chat",
-                    key="add_to_context",
-                    type='secondary',
-                    disabled=add_to_context_button_status,
-                    use_container_width=True,
-                    on_click=add_to_context,
-                    args=(st.session_state.pinned_articles,),
-                )
-
-            with right_column:
-                st.button(
-                    label="❌ Close and Clear",
-                    key="close_search",
-                    type='primary',
-                    use_container_width=True,
-                    on_click=lambda: set_command_none(),
-                )
             # st.write(st.session_state)
