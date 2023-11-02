@@ -1,6 +1,6 @@
 import streamlit as st
 from utils.ai import ai_completion
-from utils.funcs import set_command_none
+from utils.funcs import set_command_none, set_command_search, set_command_pdf
 import json
 from tabs import article_search, pdf_search, sidebar
 
@@ -119,7 +119,8 @@ def new_interface():
                                "I can also help you with your PDFs. "
                                "You can find articles using the :green[**\\search**] command. "
                                "You can also dig into your PDFs by using the :green[**\\pdf**] command."
-                               "Start with **\\search** or **\\pdf** to begin."},
+                               "Start with **\\search** or **\\pdf** to begin. \n\n Alternatively, you can "
+                               "click on the buttons on the left to start."},
             ]
     # st.write(st.session_state.messages_to_interface)
 
@@ -136,6 +137,29 @@ def new_interface():
             use_container_width=True,
             type='secondary',
             on_click=lambda: delete_and_clear(),
+        )
+
+        search_column, pdf_column, chat_return = st.columns(3)
+        search_column.button(
+            label="Search",
+            key="search_command",
+            use_container_width=True,
+            type='secondary',
+            on_click=lambda: set_command_search(),
+        )
+        pdf_column.button(
+            label="PDF",
+            key="pdf_command",
+            use_container_width=True,
+            type='secondary',
+            on_click=lambda: set_command_pdf(),
+        )
+        chat_return.button(
+            label="Chat",
+            key="return_command",
+            use_container_width=True,
+            type='secondary',
+            on_click=lambda: set_command_none(),
         )
 
         sidebar.show_sidebar()

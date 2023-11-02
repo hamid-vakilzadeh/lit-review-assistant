@@ -68,6 +68,14 @@ def set_command_none():
     st.session_state.command = None
 
 
+def set_command_search():
+    st.session_state.command = "\\search"
+
+
+def set_command_pdf():
+    st.session_state.command = "\\pdf"
+
+
 def review_action_buttons(article, state_var):
     # create 2 columns for the buttons
     col1, col2 = st.columns(2)
