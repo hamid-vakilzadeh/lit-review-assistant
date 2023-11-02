@@ -55,7 +55,7 @@ def chat_response(
             f"If there is no context see if the instructions are applicable to previous chat. "
             f"If the chat and context are both not research related, just say you can't help. "
             f"Follow the instructions only in the context of your persona. "
-            f"If the instruction asks for something outside of the context, "
+            f"You should NEVER use any studies that are not in the context or previous chats, "
             f"just say you can't help. "
             "Always use APA inline citation style and always mention the citation.\n "
             "You can be creative with how you mention the study, but "
@@ -173,31 +173,27 @@ def new_interface():
 
                     st.markdown(user_input)
 
-                if not st.session_state.review_pieces:
-                    with st.chat_message("assistant"):
-                        st.error("You need to select some articles first or upload a PDF.")
-                else:
-                    with st.chat_message("assistant"):
-                        ai_response = st.empty()
+                with st.chat_message("assistant"):
+                    ai_response = st.empty()
 
-                        msg = st.toast("AI is thinking...", icon="🧠")
-                        for response_chunk in chat_response(
-                                instructions=user_input,
-                                context=st.session_state.messages_to_api_context,
-                        ):
-                            msg.toast("AI is talking...", icon="🤖")
-                            ai_response.markdown(f'{response_chunk}')
+                    msg = st.toast("AI is thinking...", icon="🧠")
+                    for response_chunk in chat_response(
+                            instructions=user_input,
+                            context=st.session_state.messages_to_api_context,
+                    ):
+                        msg.toast("AI is talking...", icon="🤖")
+                        ai_response.markdown(f'{response_chunk}')
 
-                    st.session_state.messages_to_interface.append({"role": "assistant", "content": response_chunk})
-                    st.session_state.messages_to_api.append({"role": "assistant", "content": response_chunk})
+                st.session_state.messages_to_interface.append({"role": "assistant", "content": response_chunk})
+                st.session_state.messages_to_api.append({"role": "assistant", "content": response_chunk})
 
-                    update_chat(
-                        chat_id="1",
-                        messages_ref=st.session_state.messages_ref,
-                        message_content=st.session_state.messages_to_interface,
-                        pinned_articles=st.session_state.pinned_articles,
-                        pinned_pdfs=st.session_state.pinned_pdfs,
-                    )
+                update_chat(
+                    chat_id="1",
+                    messages_ref=st.session_state.messages_ref,
+                    message_content=st.session_state.messages_to_interface,
+                    pinned_articles=st.session_state.pinned_articles,
+                    pinned_pdfs=st.session_state.pinned_pdfs,
+                )
 
         if st.session_state.command == "\\search":
             # if st.session_state.messages_to_interface[-1]['content'] != "\\search" and user_input:
