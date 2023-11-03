@@ -464,6 +464,6 @@ def pdf_search(show_context: bool = False):
                                 state_var=st.session_state.pinned_pdfs,
                             )
 
-    st.write(st.session_state)
+    # st.write(st.session_state)
 
 
