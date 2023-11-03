@@ -19,9 +19,9 @@ text_splitter = CharacterTextSplitter(
 
 @st.cache_resource
 def get_chromadb_running():
-    st.session_state.memory_client = chromadb.Client()
+    memory_client = chromadb.Client()
     # memory_client.delete_collection("pdf")
-    memory_collection = st.session_state.memory_client.get_or_create_collection(
+    memory_collection = memory_client.get_or_create_collection(
         "pdf",
         embedding_function=openai_ef
     )
@@ -33,13 +33,22 @@ def pdf_quick_summary(
         citation,
 ) -> list:
     messages = [
-        {"role": "system",
-         "content": "You are a researcher and you are collecting notes for your literature review."
-         },
+        {
+            "role": "system",
+            "content": "You are a research assistant and you should help the professor with their research. "
+                       "You will be provided with documents in the chat and some requests. always refer to the context of the chat "
+                       "for papers. Focus on the papers that the user provides as they change. Apologies are not necessary. "
+                       "Your task is to answer the question using only the provided research articles and to cite the passage(s) "
+                       "of the document used to answer the question in inline APA style. If the document does not contain the "
+                       "information needed to answer this question then simply write: cannot answer based on the provided "
+                       "documents. If an answer to the question is provided, it must be annotated with a citation. "
+        },
         {"role": "user", "content": (
             """
-            The following paragraphs are originally from {citation}.
-        
+            The following paragraphs are originally from <citation>{citation}<citation>.
+            
+            <context>{document}<context>
+
             You are writing a paper, and you are taking notes about this paper. 
             Your job is to synthesize this paper. Try to make it concise and short.
         
@@ -53,7 +62,6 @@ def pdf_quick_summary(
             if you do not follow the above rules, you will be penalized.
             
             Begin:
-            {document}
             """.format(document=document, citation=citation)
         )
          },
@@ -70,9 +78,16 @@ def pdf_q_and_a(
     information = "\n".join([f"- {item}" for item in query['documents'][0]])
 
     messages = [
-        {"role": "system",
-         "content": "You are a researcher and you are collecting notes for your research paper."
-         },
+        {
+            "role": "system",
+            "content": "You are a research assistant and you should help the professor with their research. "
+                       "You will be provided with documents in the chat and some requests. always refer to the context of the chat "
+                       "for papers. Focus on the papers that the user provides as they change. Apologies are not necessary. "
+                       "Your task is to answer the question using only the provided research articles and to cite the passage(s) "
+                       "of the document used to answer the question in inline APA style. If the document does not contain the "
+                       "information needed to answer this question then simply write: cannot answer based on the provided "
+                       "documents. If an answer to the question is provided, it must be annotated with a citation. "
+        },
         {"role": "user", "content": (
             """
             The following paragraphs are originally from {citation}.
@@ -161,7 +176,8 @@ def add_docs_to_db(_fulltext, _doi_to_add, _pdf_collection):
 
 
 def pdf_search(show_context: bool = False):
-    pdf_collection = get_chromadb_running()
+    if 'pdf_collection' not in st.session_state:
+        st.session_state.pdf_collection = get_chromadb_running()
 
     st.subheader("PDF Article Search")
 
@@ -267,7 +283,7 @@ def pdf_search(show_context: bool = False):
                         st.session_state['pdf_history'].append(doi_to_add)
 
                     # add docs to the chromadb
-                    add_docs_to_db(fulltext, doi_to_add, pdf_collection)
+                    add_docs_to_db(fulltext, doi_to_add, st.session_state.pdf_collection)
 
                     st.rerun()
 
@@ -290,7 +306,7 @@ def pdf_search(show_context: bool = False):
 
                 # show the number of pages for the pdf
                 # show the citation
-                #citation_area.markdown(f"**{st.session_state.current_pdf['citation'][0].strip()}**")
+                # citation_area.markdown(f"**{st.session_state.current_pdf['citation'][0].strip()}**")
                 # show radio button for quick summary or q&a
                 st.radio(
                     label="Select the type of summary you want",
@@ -392,7 +408,7 @@ def pdf_search(show_context: bool = False):
                     if submit_question:
                         if st.session_state.pdf_qa_input != '':
 
-                            query_results = pdf_collection.query(
+                            query_results = st.session_state.pdf_collection.query(
                                 query_texts=st.session_state.pdf_qa_input,
                                 where={"doi_id": st.session_state.current_pdf['doi_id']},
                                 n_results=3
@@ -448,6 +464,6 @@ def pdf_search(show_context: bool = False):
                                 state_var=st.session_state.pinned_pdfs,
                             )
 
-        # st.write(st.session_state.pinned_pdfs)
+    st.write(st.session_state)
 
 
