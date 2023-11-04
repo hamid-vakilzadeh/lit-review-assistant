@@ -3,9 +3,8 @@ import streamlit as st
 from utils import documentSearch
 from utils.ai import ai_completion
 from utils.doi import get_apa_citation
-from utils.funcs import pin_piece, unpin_piece, add_to_context, set_command_none
+from utils.funcs import pin_piece, unpin_piece
 from pandas import read_csv
-from typing import Optional
 import json
 
 
@@ -16,30 +15,25 @@ def get_journal_names():
 
 def prep_gpt_summary(
         document,
-        bullet_point: bool,
-        number_of_words: Optional[int] = None
 ) -> list:
-    if bullet_point:
-        summary_style = 'provide a list of 3 to 5 very very short ' \
-                        'bullet points of the major points of the study and its findings. ' \
-                        'always use bullet points, unless it absolutely makes no sense.\n'
-    else:
-        summary_style = 'provide a very short summary of the research article and  its findings. Do not ramble!\n'
-
-    if number_of_words:
-        summary_style += f'Keep your summary below {number_of_words} words long.\n'
 
     messages = [
-        {"role": "system", "content": "You are a research assistant and you should help "
-                                      "the professor with his research."},
-        {"role": "user", "content": (f"{summary_style}"
-                                     "always use APA style and always mention the citation.\n"
-                                     "e.g. ... et al. (2022) find that ... or similar.\n"
-                                     f"This is the abstract: {document['text']}\n"
-                                     f"and this is the reference: {document['citation'][0]}\n "
-                                     f"Begin\n "
-                                     )
-         },
+        {
+            "role": "system",
+            "content": "You are a research assistant and you should help the professor with their research. "
+                       "You will be provided with an abstract. "
+                       "Your task is to summarize the abstract. Use inline APA style to cite the paper once. "
+                       "Provide a list of 3 to 5 very short bullet points to summarize the paper. "
+                       "Keep your summary below 100 words."
+        },
+        {
+            "role": "user",
+            "content": (
+                f"Summarize this is abstract in a few bullet points: <abstract>{document['text']}<abstract>\n"
+                f"<citation>{document['citation'][0]}<citation>\n "
+                f"Begin\n "
+            )
+        },
     ]
 
     return messages
@@ -57,8 +51,6 @@ def generate_completion(article):
     # generate the prompt
     prompt = prep_gpt_summary(
         article,
-        bullet_point=True,
-        number_of_words=3000
     )
 
     response = ai_completion(
@@ -167,13 +159,13 @@ def article_search(show_context: bool = False):
             )
 
             a1.markdown("OR")
-            #a1.text_input(
+            # a1.text_input(
             #    label="**author name**",
             #    placeholder=" author search (coming soon...)",
             #    key="author_search",
             #    label_visibility="collapsed",
             #    disabled=True
-            #)
+            # )
 
             # 3 colmns for submit form button
             s1, s2 = st.columns([5, 1])
