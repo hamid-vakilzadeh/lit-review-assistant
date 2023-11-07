@@ -1,9 +1,9 @@
 import requests
 import streamlit as st
-from tenacity import retry, wait_random_exponential, stop_after_attempt
+from tenacity import retry, wait_random, stop_after_attempt
 
 
-@retry(wait=wait_random_exponential(multiplier=1, max=40), stop=stop_after_attempt(4))
+@retry(wait=wait_random(min=2, max=10), stop=stop_after_attempt(5))
 def ai_completion(
         messages: list,
         max_tokens: int = 400,
