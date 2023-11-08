@@ -2,7 +2,8 @@ import streamlit as st
 import json
 import pyrebase
 from google.oauth2 import service_account
-from utils.firestore_db import firestore, create_new_profile, add_user_to_db
+from google.cloud import firestore
+from utils.firestore_db import create_new_profile, add_user_to_db
 from time import time
 
 
