@@ -371,18 +371,18 @@ def pdf_search(show_context: bool = False):
                         )
                         # response_area.write(text[0].page_content)
 
-                        with response_area.container():
-                            msg = st.toast("AI is thinking...", icon="🧠")
-                            try:
-                                response = ai_completion(
-                                    messages=prompt,
-                                    model=st.session_state.selected_model,
-                                    temperature=0.3,  # st.session_state.temperature,
-                                    max_tokens=3000,
-                                    stream=True,
-                                )
-                                collected_chunks = []
-                                report = []
+                        msg = st.toast("AI is thinking...", icon="🧠")
+                        try:
+                            response = ai_completion(
+                                messages=prompt,
+                                model=st.session_state.selected_model,
+                                temperature=0.3,  # st.session_state.temperature,
+                                max_tokens=3000,
+                                stream=True,
+                            )
+                            collected_chunks = []
+                            report = []
+                            with response_area.container():
                                 for line in response.iter_lines():
                                     msg.toast("AI is talking...", icon="🤖")
                                     if line and 'data' in line.decode('utf-8'):
@@ -394,30 +394,29 @@ def pdf_search(show_context: bool = False):
                                             st.session_state.last_pdf_response = "".join(report).strip()
                                             response_area.markdown(f'{st.session_state.last_pdf_response}')
 
-                                st.toast("AI is done talking...", icon="✔️")
+                            st.toast("AI is done talking...", icon="✔️")
 
-                                piece_info = dict(
-                                    id=int(time.time()),
-                                    citation=st.session_state.current_pdf['citation'],
-                                    doi_id=st.session_state.current_pdf['doi_id'],
-                                    doi=st.session_state.current_pdf['doi'],
-                                    type='summary',
-                                    prompt='summary',
-                                    text=st.session_state.last_pdf_response
-                                )
+                            piece_info = dict(
+                                id=int(time.time()),
+                                citation=st.session_state.current_pdf['citation'],
+                                doi_id=st.session_state.current_pdf['doi_id'],
+                                doi=st.session_state.current_pdf['doi'],
+                                type='summary',
+                                prompt='summary',
+                                text=st.session_state.last_pdf_response
+                            )
 
-                                st.warning(
-                                    f"If you like the response, 📌 **pin** it. "
-                                    f"Otherwise, the response will be lost."
-                                )
-                                show_pin_buttons(
-                                 piece=piece_info,
-                                 state_var=st.session_state.pinned_pdfs,
-                                 )
-                            except Exception as e:
-                                st.error(f"The AI is not responding. Please try again or choose another model.")
-                                st.stop()
-
+                            st.warning(
+                                f"If you like the response, 📌 **pin** it. "
+                                f"Otherwise, the response will be lost."
+                            )
+                            show_pin_buttons(
+                             piece=piece_info,
+                             state_var=st.session_state.pinned_pdfs,
+                             )
+                        except Exception as e:
+                            st.error(f"The AI is not responding. Please try again or choose another model.")
+                            st.stop()
 
                 elif st.session_state.pdf_summary_type == 'Q&A':
                     if submit_question:
@@ -435,18 +434,18 @@ def pdf_search(show_context: bool = False):
                                 citation=st.session_state.current_pdf['citation']
                             )
 
-                            with response_area.container():
-                                msg = st.toast("AI is thinking...", icon="🧠")
-                                try:
-                                    response = ai_completion(
-                                        messages=prompt,
-                                        model=st.session_state.selected_model,
-                                        temperature=0.3,  # st.session_state.temperature,
-                                        max_tokens=3000,
-                                        stream=True,
-                                    )
-                                    collected_chunks = []
-                                    report = []
+                            msg = st.toast("AI is thinking...", icon="🧠")
+                            try:
+                                response = ai_completion(
+                                    messages=prompt,
+                                    model=st.session_state.selected_model,
+                                    temperature=0.3,  # st.session_state.temperature,
+                                    max_tokens=3000,
+                                    stream=True,
+                                )
+                                collected_chunks = []
+                                report = []
+                                with response_area.container():
                                     for line in response.iter_lines():
                                         msg.toast("AI is talking...", icon="🤖")
                                         if line and 'data' in line.decode('utf-8'):
@@ -458,30 +457,30 @@ def pdf_search(show_context: bool = False):
                                                 st.session_state.last_pdf_response = "".join(report).strip()
                                                 response_area.markdown(f'{st.session_state.last_pdf_response}')
 
-                                    st.toast("AI is done talking...", icon="✔️")
+                                st.toast("AI is done talking...", icon="✔️")
 
-                                    piece_info = dict(
-                                        id=int(time.time()),
-                                        citation=st.session_state.current_pdf['citation'],
-                                        doi_id=st.session_state.current_pdf['doi_id'],
-                                        doi=st.session_state.current_pdf['doi'],
-                                        type='Q&A',
-                                        prompt=st.session_state.pdf_qa_input,
-                                        text=st.session_state.last_pdf_response
-                                    )
+                                piece_info = dict(
+                                    id=int(time.time()),
+                                    citation=st.session_state.current_pdf['citation'],
+                                    doi_id=st.session_state.current_pdf['doi_id'],
+                                    doi=st.session_state.current_pdf['doi'],
+                                    type='Q&A',
+                                    prompt=st.session_state.pdf_qa_input,
+                                    text=st.session_state.last_pdf_response
+                                )
 
-                                    st.warning(
-                                        f"If you like the response, 📌 **pin** it. "
-                                        f"Otherwise, the response will be lost."
-                                    )
+                                st.warning(
+                                    f"If you like the response, 📌 **pin** it. "
+                                    f"Otherwise, the response will be lost."
+                                )
 
-                                    show_pin_buttons(
-                                        piece=piece_info,
-                                        state_var=st.session_state.pinned_pdfs,
-                                    )
-                                except Exception as e:
-                                    st.error(f"The AI is not responding. Please try again or choose another model.")
-                                    st.stop()
+                                show_pin_buttons(
+                                    piece=piece_info,
+                                    state_var=st.session_state.pinned_pdfs,
+                                )
+                            except Exception as e:
+                                st.error(f"The AI is not responding. Please try again or choose another model.")
+                                st.stop()
 
     # st.write(st.session_state)
 
