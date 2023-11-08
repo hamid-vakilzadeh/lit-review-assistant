@@ -147,7 +147,7 @@ def get_citation_from_pdf(pdf) -> str:
     first_two_pages = " ".join([item.page_content for item in pdf['texts'][:2]])
     prompt = ("generate apa citation from this content which is from the first two pages of a pdf file in a python list where the first "
               "element is for the bibliography and the second item is for in-line citations, just give me a list and nothing else! Avoid "
-              f"explaining yourself. : {first_two_pages}")
+              f"explaining yourself. : <content>{first_two_pages}<content>")
     try:
         response = ai_completion(
             messages=[{"role": "user", "content": prompt}],
@@ -157,13 +157,14 @@ def get_citation_from_pdf(pdf) -> str:
             stream=False,
         )
         citation_from_text = response.json()['choices'][0]['message']['content'].lower()
+        # find the list in response based on the presence of []
+        citation_from_text = citation_from_text[citation_from_text.find('['):citation_from_text.find(']')+1]
         # get citation from text as a list
         citation_from_text = literal_eval(citation_from_text)
         return citation_from_text
     except Exception as e:
         st.error(f"The AI is not responding. Please try again or choose another model.")
         st.stop()
-
 
 
 @st.cache_data(show_spinner=False)
@@ -235,13 +236,13 @@ def pdf_search(show_context: bool = False):
 
         # submit button
         with s2:
-            pdf_form_submit = st.button(
+            pdf_form_import = st.button(
                 label='**Import**',
                 type='primary',
                 use_container_width=True,
             )
 
-        if pdf_form_submit:
+        if pdf_form_import:
             if uploaded_file is None:
                 st.toast(
                     f":red[**Please upload a pdf file and enter the DOI of the article.**]",
@@ -264,8 +265,13 @@ def pdf_search(show_context: bool = False):
                         try:
                             citation = get_citation_from_pdf(get_pdf_text(uploaded_file))[0]
                             doi = get_citation_from_pdf(get_pdf_text(uploaded_file))[1]
+                            if doi in dois_present:
+                                st.toast(
+                                    f"**This article has already been imported!**", icon="😎"
+                                )
+                                st.rerun()
                         except:
-                            st.error('could not get citation from pdf')
+                            st.error('Could not get citation from pdf. Please try again.')
                     else:
                         citation = get_citation(st.session_state.pdf_doi_input)
                         doi = st.session_state.pdf_doi_input
@@ -283,11 +289,11 @@ def pdf_search(show_context: bool = False):
                     msg.toast("**saving the article...**", icon="💾")
 
                     dois_present = [d['doi'] for d in st.session_state['pdf_history']]
-                    if doi_to_add not in dois_present:
+                    if doi_to_add['doi'] not in dois_present:
                         st.session_state['pdf_history'].append(doi_to_add)
 
-                    # add docs to the chromadb
-                    add_docs_to_db(fulltext, doi_to_add, st.session_state.pdf_collection)
+                        # add docs to the chromadb
+                        add_docs_to_db(fulltext, doi_to_add, st.session_state.pdf_collection)
 
                     st.rerun()
 
