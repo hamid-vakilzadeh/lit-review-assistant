@@ -270,8 +270,9 @@ def pdf_search():
                                     f"**This article has already been imported!**", icon="😎"
                                 )
                                 st.rerun()
-                        except:
+                        except Exception as e:
                             st.error('Could not get citation from pdf. Please try again.')
+                            st.stop()
                     else:
                         citation = get_citation(st.session_state.pdf_doi_input)
                         doi = st.session_state.pdf_doi_input
@@ -285,6 +286,9 @@ def pdf_search():
                         'doi_id': ''.join(doi.split("/")[1:]),
                         'pieces': []
                     }
+
+                    if doi_to_add['doi_id'] == '':
+                        doi_to_add['doi_id'] = doi_to_add['id']
 
                     msg.toast("**saving the article...**", icon="💾")
 
@@ -482,6 +486,6 @@ def pdf_search():
                                 st.error(f"The AI is not responding. Please try again or choose another model.")
                                 st.stop()
 
-    # st.write(st.session_state)
+    # st.write(st.session_state.current_pdf)
 
 
