@@ -1,4 +1,3 @@
-from google.cloud import firestore
 import streamlit as st
 import requests
 import json
@@ -69,7 +68,7 @@ def update_chat(messages_ref, chat_id, message_content, pinned_articles, pinned_
             ,
             "pdfs": pinned_pdfs
         },
-        merge=True
+        # merge=True
     )
 
 
