@@ -102,7 +102,7 @@ def update_filter():
     pass
 
 
-def article_search(show_context: bool = False):
+def article_search():
     st.subheader("Article Search")
     # user input for topic to search for
     # explain
@@ -172,7 +172,7 @@ def article_search(show_context: bool = False):
             #    disabled=True
             # )
 
-            # 3 colmns for submit form button
+            # 3 columns for submit form button
             s1, s2 = st.columns([5, 1])
 
             s1.text_input(

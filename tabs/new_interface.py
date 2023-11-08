@@ -225,11 +225,11 @@ def new_interface():
         if st.session_state.command == "\\search":
             # if st.session_state.messages_to_interface[-1]['content'] != "\\search" and user_input:
             #     st.session_state.messages_to_interface.append({"role": "user", "content": user_input})
-            article_search.article_search(show_context=True)
+            article_search.article_search()
 
         elif st.session_state.command == "\\pdf":
             # if st.session_state.messages_to_interface[-1]['content'] != "\\pdf" and user_input:
             #     st.session_state.messages_to_interface.append({"role": "user", "content": user_input})
-            pdf_search.pdf_search(show_context=True)
+            pdf_search.pdf_search()
 
     # st.write(st.session_state)
