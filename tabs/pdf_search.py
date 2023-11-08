@@ -19,13 +19,13 @@ text_splitter = CharacterTextSplitter(
 
 @st.cache_resource
 def get_chromadb_running():
-    memory_client = chromadb.Client()
+    st.session_state.memory_client = chromadb.Client()
     # memory_client.delete_collection("pdf")
-    memory_collection = memory_client.get_or_create_collection(
+    st.session_state.memory_collection = st.session_state.memory_client.get_or_create_collection(
         "pdf",
         embedding_function=openai_ef
     )
-    return memory_collection
+    return st.session_state.memory_collection
 
 
 def pdf_quick_summary(
