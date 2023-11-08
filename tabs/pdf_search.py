@@ -3,7 +3,7 @@ from utils.doi import get_citation
 from pypdf import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
 from utils.ai import ai_completion
-from utils.funcs import show_pin_buttons, add_to_context, set_command_none
+from utils.funcs import show_pin_buttons
 import json
 import time
 import chromadb
@@ -180,7 +180,7 @@ def add_docs_to_db(_fulltext, _doi_to_add, _pdf_collection):
     )
 
 
-def pdf_search(show_context: bool = False):
+def pdf_search():
     if 'pdf_collection' not in st.session_state:
         st.session_state.pdf_collection = get_chromadb_running()
 
