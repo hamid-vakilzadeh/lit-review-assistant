@@ -53,24 +53,29 @@ def generate_completion(article):
         article,
     )
 
-    response = ai_completion(
-        messages=prompt,
-        model=st.session_state.selected_model,
-        temperature=0.3,
-        max_tokens=1500,
-        stream=True,
-    )
-    collected_chunks = []
-    report = []
-    for line in response.iter_lines():
-        if line and 'data' in line.decode('utf-8'):
-            content = line.decode('utf-8').replace('data: ', '')
-            if 'content' in content:
-                message = json.loads(content, strict=False)
-                collected_chunks.append(message)  # save the event response
-                report.append(message['choices'][0]['delta']['content'])
-                st.session_state.last_response = "".join(report).strip()
-                yield st.session_state.last_response
+    try:
+        response = ai_completion(
+            messages=prompt,
+            model=st.session_state.selected_model,
+            temperature=0.3,
+            max_tokens=1500,
+            stream=True,
+        )
+        collected_chunks = []
+        report = []
+        for line in response.iter_lines():
+            if line and 'data' in line.decode('utf-8'):
+                content = line.decode('utf-8').replace('data: ', '')
+                if 'content' in content:
+                    message = json.loads(content, strict=False)
+                    collected_chunks.append(message)  # save the event response
+                    report.append(message['choices'][0]['delta']['content'])
+                    st.session_state.last_response = "".join(report).strip()
+                    yield st.session_state.last_response
+
+    except Exception as e:
+        st.error(f"The AI is not responding. Please try again or choose another model.")
+        st.stop()
 
 
 def sort_results(sort_method):

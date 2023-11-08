@@ -66,26 +66,29 @@ def chat_response(
         )
          },
     )
+    try:
+        response = ai_completion(
+            messages=st.session_state.messages_to_api,
+            model=st.session_state.selected_model,
+            temperature=0.3,  # st.session_state.temperature,
+            max_tokens=2000,
+            stream=True,
+        )
 
-    response = ai_completion(
-        messages=st.session_state.messages_to_api,
-        model=st.session_state.selected_model,
-        temperature=0.3,  # st.session_state.temperature,
-        max_tokens=2000,
-        stream=True,
-    )
-
-    collected_chunks = []
-    report = []
-    for line in response.iter_lines():
-        if line and 'data' in line.decode('utf-8'):
-            content = line.decode('utf-8').replace('data: ', '')
-            if 'content' in content:
-                message = json.loads(content, strict=False)
-                collected_chunks.append(message)  # save the event response
-                report.append(message['choices'][0]['delta']['content'])
-                st.session_state.last_review = "".join(report).strip()
-                yield st.session_state.last_review
+        collected_chunks = []
+        report = []
+        for line in response.iter_lines():
+            if line and 'data' in line.decode('utf-8'):
+                content = line.decode('utf-8').replace('data: ', '')
+                if 'content' in content:
+                    message = json.loads(content, strict=False)
+                    collected_chunks.append(message)  # save the event response
+                    report.append(message['choices'][0]['delta']['content'])
+                    st.session_state.last_review = "".join(report).strip()
+                    yield st.session_state.last_review
+    except Exception as e:
+        st.error(f"The AI is not responding. Please try again or choose another model.")
+        st.stop()
 
 
 def new_interface():

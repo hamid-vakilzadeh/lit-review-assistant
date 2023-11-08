@@ -148,18 +148,22 @@ def get_citation_from_pdf(pdf) -> str:
     prompt = ("generate apa citation from this content which is from the first two pages of a pdf file in a python list where the first "
               "element is for the bibliography and the second item is for in-line citations, just give me a list and nothing else! Avoid "
               f"explaining yourself. : {first_two_pages}")
+    try:
+        response = ai_completion(
+            messages=[{"role": "user", "content": prompt}],
+            model='openai/gpt-4',
+            temperature=0,  # st.session_state.temperature,
+            max_tokens=300,
+            stream=False,
+        )
+        citation_from_text = response.json()['choices'][0]['message']['content'].lower()
+        # get citation from text as a list
+        citation_from_text = literal_eval(citation_from_text)
+        return citation_from_text
+    except Exception as e:
+        st.error(f"The AI is not responding. Please try again or choose another model.")
+        st.stop()
 
-    response = ai_completion(
-        messages=[{"role": "user", "content": prompt}],
-        model='openai/gpt-4',
-        temperature=0,  # st.session_state.temperature,
-        max_tokens=300,
-        stream=False,
-    )
-    citation_from_text = response.json()['choices'][0]['message']['content'].lower()
-    # get citation from text as a list
-    citation_from_text = literal_eval(citation_from_text)
-    return citation_from_text
 
 
 @st.cache_data(show_spinner=False)
@@ -363,46 +367,51 @@ def pdf_search(show_context: bool = False):
 
                         with response_area.container():
                             msg = st.toast("AI is thinking...", icon="🧠")
-                            response = ai_completion(
-                                messages=prompt,
-                                model=st.session_state.selected_model,
-                                temperature=0.3,  # st.session_state.temperature,
-                                max_tokens=3000,
-                                stream=True,
-                            )
-                        collected_chunks = []
-                        report = []
-                        for line in response.iter_lines():
-                            msg.toast("AI is talking...", icon="🤖")
-                            if line and 'data' in line.decode('utf-8'):
-                                content = line.decode('utf-8').replace('data: ', '')
-                                if 'content' in content:
-                                    message = json.loads(content, strict=False)
-                                    collected_chunks.append(message)  # save the event response
-                                    report.append(message['choices'][0]['delta']['content'])
-                                    st.session_state.last_pdf_response = "".join(report).strip()
-                                    response_area.markdown(f'{st.session_state.last_pdf_response}')
+                            try:
+                                response = ai_completion(
+                                    messages=prompt,
+                                    model=st.session_state.selected_model,
+                                    temperature=0.3,  # st.session_state.temperature,
+                                    max_tokens=3000,
+                                    stream=True,
+                                )
+                                collected_chunks = []
+                                report = []
+                                for line in response.iter_lines():
+                                    msg.toast("AI is talking...", icon="🤖")
+                                    if line and 'data' in line.decode('utf-8'):
+                                        content = line.decode('utf-8').replace('data: ', '')
+                                        if 'content' in content:
+                                            message = json.loads(content, strict=False)
+                                            collected_chunks.append(message)  # save the event response
+                                            report.append(message['choices'][0]['delta']['content'])
+                                            st.session_state.last_pdf_response = "".join(report).strip()
+                                            response_area.markdown(f'{st.session_state.last_pdf_response}')
 
-                        st.toast("AI is done talking...", icon="✔️")
+                                st.toast("AI is done talking...", icon="✔️")
 
-                        piece_info = dict(
-                            id=int(time.time()),
-                            citation=st.session_state.current_pdf['citation'],
-                            doi_id=st.session_state.current_pdf['doi_id'],
-                            doi=st.session_state.current_pdf['doi'],
-                            type='summary',
-                            prompt='summary',
-                            text=st.session_state.last_pdf_response
-                        )
+                                piece_info = dict(
+                                    id=int(time.time()),
+                                    citation=st.session_state.current_pdf['citation'],
+                                    doi_id=st.session_state.current_pdf['doi_id'],
+                                    doi=st.session_state.current_pdf['doi'],
+                                    type='summary',
+                                    prompt='summary',
+                                    text=st.session_state.last_pdf_response
+                                )
 
-                        st.warning(
-                            f"If you like the response, 📌 **pin** it. "
-                            f"Otherwise, the response will be lost."
-                        )
-                        show_pin_buttons(
-                         piece=piece_info,
-                         state_var=st.session_state.pinned_pdfs,
-                         )
+                                st.warning(
+                                    f"If you like the response, 📌 **pin** it. "
+                                    f"Otherwise, the response will be lost."
+                                )
+                                show_pin_buttons(
+                                 piece=piece_info,
+                                 state_var=st.session_state.pinned_pdfs,
+                                 )
+                            except Exception as e:
+                                st.error(f"The AI is not responding. Please try again or choose another model.")
+                                st.stop()
+
 
                 elif st.session_state.pdf_summary_type == 'Q&A':
                     if submit_question:
@@ -422,47 +431,51 @@ def pdf_search(show_context: bool = False):
 
                             with response_area.container():
                                 msg = st.toast("AI is thinking...", icon="🧠")
-                                response = ai_completion(
-                                    messages=prompt,
-                                    model=st.session_state.selected_model,
-                                    temperature=0.3,  # st.session_state.temperature,
-                                    max_tokens=3000,
-                                    stream=True,
-                                )
-                            collected_chunks = []
-                            report = []
-                            for line in response.iter_lines():
-                                msg.toast("AI is talking...", icon="🤖")
-                                if line and 'data' in line.decode('utf-8'):
-                                    content = line.decode('utf-8').replace('data: ', '')
-                                    if 'content' in content:
-                                        message = json.loads(content, strict=False)
-                                        collected_chunks.append(message)  # save the event response
-                                        report.append(message['choices'][0]['delta']['content'])
-                                        st.session_state.last_pdf_response = "".join(report).strip()
-                                        response_area.markdown(f'{st.session_state.last_pdf_response}')
+                                try:
+                                    response = ai_completion(
+                                        messages=prompt,
+                                        model=st.session_state.selected_model,
+                                        temperature=0.3,  # st.session_state.temperature,
+                                        max_tokens=3000,
+                                        stream=True,
+                                    )
+                                    collected_chunks = []
+                                    report = []
+                                    for line in response.iter_lines():
+                                        msg.toast("AI is talking...", icon="🤖")
+                                        if line and 'data' in line.decode('utf-8'):
+                                            content = line.decode('utf-8').replace('data: ', '')
+                                            if 'content' in content:
+                                                message = json.loads(content, strict=False)
+                                                collected_chunks.append(message)  # save the event response
+                                                report.append(message['choices'][0]['delta']['content'])
+                                                st.session_state.last_pdf_response = "".join(report).strip()
+                                                response_area.markdown(f'{st.session_state.last_pdf_response}')
 
-                            st.toast("AI is done talking...", icon="✔️")
+                                    st.toast("AI is done talking...", icon="✔️")
 
-                            piece_info = dict(
-                                id=int(time.time()),
-                                citation=st.session_state.current_pdf['citation'],
-                                doi_id=st.session_state.current_pdf['doi_id'],
-                                doi=st.session_state.current_pdf['doi'],
-                                type='Q&A',
-                                prompt=st.session_state.pdf_qa_input,
-                                text=st.session_state.last_pdf_response
-                            )
+                                    piece_info = dict(
+                                        id=int(time.time()),
+                                        citation=st.session_state.current_pdf['citation'],
+                                        doi_id=st.session_state.current_pdf['doi_id'],
+                                        doi=st.session_state.current_pdf['doi'],
+                                        type='Q&A',
+                                        prompt=st.session_state.pdf_qa_input,
+                                        text=st.session_state.last_pdf_response
+                                    )
 
-                            st.warning(
-                                f"If you like the response, 📌 **pin** it. "
-                                f"Otherwise, the response will be lost."
-                            )
+                                    st.warning(
+                                        f"If you like the response, 📌 **pin** it. "
+                                        f"Otherwise, the response will be lost."
+                                    )
 
-                            show_pin_buttons(
-                                piece=piece_info,
-                                state_var=st.session_state.pinned_pdfs,
-                            )
+                                    show_pin_buttons(
+                                        piece=piece_info,
+                                        state_var=st.session_state.pinned_pdfs,
+                                    )
+                                except Exception as e:
+                                    st.error(f"The AI is not responding. Please try again or choose another model.")
+                                    st.stop()
 
     # st.write(st.session_state)
 

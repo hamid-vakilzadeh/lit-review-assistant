@@ -80,26 +80,30 @@ def generate_review(articles, user_input: str):
         articles=articles,
         additional_instructions=user_input
     )
-    st.session_state.test_prompt = prompt
-    # generate the response for lit review
-    response = ai_completion(
-        messages=prompt,
-        model=st.session_state.selected_model,
-        temperature=0.3,
-        max_tokens=5000,
-        stream=True,
-    )
-    collected_chunks = []
-    report = []
-    for line in response.iter_lines():
-        if line and 'data' in line.decode('utf-8'):
-            content = line.decode('utf-8').replace('data: ', '')
-            if 'content' in content:
-                message = json.loads(content, strict=False)
-                collected_chunks.append(message)  # save the event response
-                report.append(message['choices'][0]['delta']['content'])
-                st.session_state.last_review = "".join(report).strip()
-                yield st.session_state.last_review
+
+    try:
+        # generate the response for lit review
+        response = ai_completion(
+            messages=prompt,
+            model=st.session_state.selected_model,
+            temperature=0.3,
+            max_tokens=5000,
+            stream=True,
+        )
+        collected_chunks = []
+        report = []
+        for line in response.iter_lines():
+            if line and 'data' in line.decode('utf-8'):
+                content = line.decode('utf-8').replace('data: ', '')
+                if 'content' in content:
+                    message = json.loads(content, strict=False)
+                    collected_chunks.append(message)  # save the event response
+                    report.append(message['choices'][0]['delta']['content'])
+                    st.session_state.last_review = "".join(report).strip()
+                    yield st.session_state.last_review
+    except Exception as e:
+        st.error(f"The AI is not responding. Please try again or choose another model.")
+        st.stop()
 
 
 def literature_review():
