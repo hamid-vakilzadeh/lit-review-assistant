@@ -26,7 +26,7 @@ if __name__ == '__main__':
         # The description
         st.markdown(
             """
-            This app is designed to assist researchers in finding and organizing accounting literature.
+            This app is designed to assist researchers in finding and organizing literature.
             """
         )
     with st.sidebar:
@@ -34,11 +34,8 @@ if __name__ == '__main__':
 
     # display the instructions
     with st.container():
-        st.markdown(
-            """
-            ### Instructions
-            instructions go here
-            """
+        st.video(
+            data="https://www.youtube.com/watch?v=-93awViey4o"
         )
     # sidebar.show_sidebar()
 
