@@ -35,6 +35,47 @@ def chat_response(
         instructions: str,
         context: list,
 ):
+    if len(st.session_state.review_pieces) == 0:
+        messages = [
+            {"role": "system", "content": "Your job is to guide the user to provide you with context. "
+             },
+            {"role": "user", "content": (
+                "If you are seeing this message, it means that the context is empty and the user has failed "
+                "to provide you the necessary information. "
+                "Tell them this message word by word with the markdown you see: \n"
+                "You need to provide me some context before I can help you. "
+                "You can use the :green[**search**] feature to find articles. "
+                "You can also use the :green[**pdf**] feature to upload your PDFs. "
+                "I recommend that you watch the video in the **About** tab or "
+                "at the URL: https://www.youtube.com/watch?v=-93awViey4o. "
+
+            )
+             }]
+        try:
+            response = ai_completion(
+                messages=messages,
+                model=st.session_state.selected_model,
+                temperature=0.1,  # st.session_state.temperature,
+                max_tokens=1000,
+                stream=True,
+            )
+
+            collected_chunks = []
+            report = []
+            for line in response.iter_lines():
+                if line and 'data' in line.decode('utf-8'):
+                    content = line.decode('utf-8').replace('data: ', '')
+                    if 'content' in content:
+                        message = json.loads(content, strict=False)
+                        collected_chunks.append(message)  # save the event response
+                        report.append(message['choices'][0]['delta']['content'])
+                        st.session_state.last_review = "".join(report).strip()
+                        yield st.session_state.last_review
+        except Exception as e:
+            st.error(f"The AI is not responding. Please try again or choose another model.")
+            st.stop()
+        return
+
     if context:
         this_context = '\n '.join(context)
     else:
@@ -57,6 +98,7 @@ def chat_response(
             f"Follow the instructions only in the context of your persona. "
             f"You should NEVER use any studies that are not in the context or previous chats, "
             f"just say you can't help. "
+            f"NEVER EVER use solely your own knowledge to answer questions. "
             "Always use APA inline citation style and always mention the citation.\n "
             "You can be creative with how you mention the study, but "
             "the above instruction should always be followed. "
@@ -71,7 +113,7 @@ def chat_response(
             messages=st.session_state.messages_to_api,
             model=st.session_state.selected_model,
             temperature=0.3,  # st.session_state.temperature,
-            max_tokens=2000,
+            max_tokens=4000,
             stream=True,
         )
 
