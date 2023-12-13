@@ -117,5 +117,4 @@ def add_user_to_db(username, _db):
 
 def new_user_request(username, _db):
     user_ref = _db.collection("new_user_requests")
-    if not user_ref.get():
-        user_ref.document(username).set({})
+    user_ref.document(username).set({})
