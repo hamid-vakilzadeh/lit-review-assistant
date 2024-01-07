@@ -137,7 +137,15 @@ def find_docs(
         return found_articles_in_format(docs)
 
     else:
-        where = {"doi": {"$eq": str(doi)}}
+        if '\n' in st.session_state.doi_search:
+            doi = doi.split('\n')
+
+            # ensure duplicates are removed
+            doi = list(set([item.strip() for item in doi]))
+        else:
+            doi = [doi]
+
+        where = {"doi": {"$in": doi}}
         topic = ' '
 
         # query the database
@@ -147,11 +155,12 @@ def find_docs(
         )
 
         if len(docs['documents'][0]) == 0:
-            try:
-                docs = get_article_with_doi(doi)
-                return [docs]
-            except Exception as e:
-                st.error(e)
-                return []
+            docs = []
+            for d in doi:
+                try:
+                    docs.append(get_article_with_doi(d))
+                except Exception as e:
+                    st.toast(e)
+            return docs
         else:
             return found_articles_in_format(docs)
