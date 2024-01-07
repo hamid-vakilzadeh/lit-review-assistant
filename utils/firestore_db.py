@@ -66,6 +66,8 @@ def add_new_message(
 
 
 def update_chat(
+        _db,
+        username,
         messages_ref,
         chat_id,
         chat_name,
@@ -74,21 +76,25 @@ def update_chat(
         pinned_articles,
         pinned_pdfs
 ):
+    msg = {
+            "chat_name": chat_name,
+            "last_updated": last_updated,
+            "chat": message_content,
+            "articles": pinned_articles,
+            "pdfs": pinned_pdfs
+        }
     document_ref = messages_ref.document(
         chat_id
     )
     document_ref.set(
-        {
-            "chat_name": chat_name
-            ,
-            "last_updated": last_updated
-            ,
-            "chat": message_content
-            ,
-            "articles": pinned_articles
-            ,
-            "pdfs": pinned_pdfs
-        },
+        msg,
+        # merge=True
+    )
+
+    # record for research
+    _db.collection("research_db").document(
+        'history').collection(username).document(chat_id).set(
+        msg,
         # merge=True
     )
 

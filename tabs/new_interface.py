@@ -368,6 +368,8 @@ def new_interface():
             st.session_state.messages_to_api.append({"role": "assistant", "content": response_chunk})
 
             update_chat(
+                _db=st.session_state.db,
+                username=st.session_state.user['localId'],
                 chat_id=st.session_state.chat_id,
                 chat_name=st.session_state.current_chat_name,
                 last_updated=time.time(),
