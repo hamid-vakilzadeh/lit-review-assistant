@@ -6,7 +6,7 @@ from tenacity import retry, wait_random, stop_after_attempt
 @retry(wait=wait_random(min=2, max=10), stop=stop_after_attempt(5))
 def ai_completion(
         messages: list,
-        max_tokens: int = 400,
+        # max_tokens: int = 400,
         temperature: float = 0.3,
         model: str = "anthropic/claude-v1-100k",
         stream: bool = True,
@@ -33,7 +33,7 @@ def ai_completion(
     body = {
         'model': model,
         'messages': messages,
-        'max_tokens': max_tokens,
+        # 'max_tokens': max_tokens,
         'temperature': temperature,
         'top_p': 1,
         'stream': stream,
