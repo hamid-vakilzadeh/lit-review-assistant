@@ -156,9 +156,9 @@ def article_search():
             # 3 columns for submit form button
             a1, a2 = st.columns([5, 1])
 
-            a1.text_input(
+            a1.text_area(
                 label="**DOI**",
-                placeholder="Enter a DOI",
+                placeholder="Enter DOI(s) one per line",
                 key="doi_search",
                 label_visibility="collapsed",
             )
