@@ -99,3 +99,6 @@ def ensure_session_state_vars():
         elif time() - st.session_state.session_start_time > 3600:
             st.session_state.clear()
             st.rerun()
+
+    if 'change_name' not in st.session_state:
+        st.session_state.change_name = False
