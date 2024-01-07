@@ -1,5 +1,5 @@
 import streamlit as st
-from tabs import sidebar, article_search, pdf_search, literature_review
+from tabs import sidebar, article_search, pdf_search, literature_review, updates
 from utils.session_state_vars import ensure_session_state_vars
 
 # ensure the session state variables are created
@@ -30,7 +30,8 @@ if __name__ == '__main__':
             """
         )
     with st.sidebar:
-        sidebar.show_logout()
+        if 'user' in st.session_state:
+            sidebar.show_logout()
 
     # display the instructions
     with st.container():
@@ -41,17 +42,19 @@ if __name__ == '__main__':
 
     # article_search_tab, pdf_tab, literature_review_tab = st.tabs(
     #    ["**Articles**", "**My PDFs**", "**Literature Review**"]
-    #)
-
+    # )
 
     # display the Articles Search tab
-    #with article_search_tab:
+    # with article_search_tab:
     #    article_search.article_search()
 
     # display the PDF Search (My PDFs) tab
-    #with pdf_tab:
+    # with pdf_tab:
     #    pdf_search.pdf_search()
 
     # display the Literature Review tab
-    #with literature_review_tab:
+    # with literature_review_tab:
     #    literature_review.literature_review()
+
+    with st.container():
+        updates.updates()
