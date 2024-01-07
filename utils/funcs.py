@@ -6,7 +6,7 @@ def pin_piece(piece, state_var):
     state_var.append(piece)
     st.session_state.review_pieces.append(piece)
     add_to_context(piece)
-    st.toast(f"**pinned successfully!**", icon="📌")
+    # st.toast(f"**pinned successfully!**", icon="📌")
 
 
 def unpin_piece(article, state_var):
