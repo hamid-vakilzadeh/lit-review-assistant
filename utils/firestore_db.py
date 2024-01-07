@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import json
+import time
 
 
 def create_new_profile(_db, username):
@@ -35,8 +36,12 @@ def get_all_messages(_messages_ref):
     for doc in _messages_ref.stream():
         doc_id = doc.id
         chat = doc.to_dict()
-        all_messages[doc_id] = chat
-    sorted_history = {k: v for k, v in sorted(all_messages.items(), key=lambda item: item[0], reverse=True)}
+        if 'chat_name' not in chat:
+            chat['chat_name'] = 'Untitled'
+            chat['last_updated'] = time.time()
+            update_chat_db(_messages_ref, doc_id, chat['chat_name'], chat['last_updated'])
+        all_messages[doc_id] = {'chat_name': chat['chat_name'], 'last_updated': chat['last_updated']}
+    sorted_history = {k: v for k, v in sorted(all_messages.items(), key=lambda item: item[1]['last_updated'], reverse=True)}
 
     return sorted_history
 
@@ -47,21 +52,37 @@ def get_document(_messages_ref, message_id):
     return document.to_dict()
 
 
-def add_new_message(messages_ref, title, message_content):
+def add_new_message(
+        messages_ref,
+        last_updated,
+):
     document_ref = messages_ref.document()
     document_ref.set(
         {
-            'title': title
-            ,
-            "chat": message_content
+            "last_updated": last_updated,
+            "chat_name": "Untitled"
         }
     )
 
 
-def update_chat(messages_ref, chat_id, message_content, pinned_articles, pinned_pdfs):
-    document_ref = messages_ref.document(chat_id)
+def update_chat(
+        messages_ref,
+        chat_id,
+        chat_name,
+        last_updated,
+        message_content,
+        pinned_articles,
+        pinned_pdfs
+):
+    document_ref = messages_ref.document(
+        chat_id
+    )
     document_ref.set(
         {
+            "chat_name": chat_name
+            ,
+            "last_updated": last_updated
+            ,
             "chat": message_content
             ,
             "articles": pinned_articles
@@ -69,6 +90,25 @@ def update_chat(messages_ref, chat_id, message_content, pinned_articles, pinned_
             "pdfs": pinned_pdfs
         },
         # merge=True
+    )
+
+
+def update_chat_db(
+        messages_ref,
+        chat_id,
+        chat_name,
+        last_updated,
+):
+    document_ref = messages_ref.document(
+        chat_id
+    )
+    document_ref.set(
+        {
+            "chat_name": chat_name
+            ,
+            "last_updated": last_updated
+        },
+        merge=True
     )
 
 
