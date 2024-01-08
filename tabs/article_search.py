@@ -58,7 +58,7 @@ def generate_completion(article):
             messages=prompt,
             model=st.session_state.selected_model,
             temperature=0.3,
-            max_tokens=1500,
+            # max_tokens=1500,
             stream=True,
         )
         collected_chunks = []
