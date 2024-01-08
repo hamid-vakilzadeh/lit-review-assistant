@@ -153,7 +153,7 @@ def get_citation_from_pdf(pdf) -> str:
             messages=[{"role": "user", "content": prompt}],
             model='openai/gpt-4',
             temperature=0,  # st.session_state.temperature,
-            max_tokens=300,
+            # max_tokens=300,
             stream=False,
         )
         citation_from_text = response.json()['choices'][0]['message']['content'].lower()
@@ -381,7 +381,7 @@ def pdf_search():
                                 messages=prompt,
                                 model=st.session_state.selected_model,
                                 temperature=0.3,  # st.session_state.temperature,
-                                max_tokens=3000,
+                                # max_tokens=3000,
                                 stream=True,
                             )
                             collected_chunks = []
@@ -444,7 +444,7 @@ def pdf_search():
                                     messages=prompt,
                                     model=st.session_state.selected_model,
                                     temperature=0.3,  # st.session_state.temperature,
-                                    max_tokens=3000,
+                                    # max_tokens=3000,
                                     stream=True,
                                 )
                                 collected_chunks = []
