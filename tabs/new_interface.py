@@ -70,7 +70,7 @@ def chat_response(
                 messages=messages,
                 model=st.session_state.selected_model,
                 temperature=0.1,  # st.session_state.temperature,
-                max_tokens=1000,
+                # max_tokens=1000,
                 stream=True,
             )
 
