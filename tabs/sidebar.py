@@ -103,13 +103,19 @@ def choose_model():
     chosen_model = st.selectbox(
         label='Model Name',
         options=[
+            'OpenAI: GPT-3.5 16K',
+            'OpenAI: GPT-4 32K',
             'OpenAI: GPT-3.5 16K (Latest)',
             'OpenAI: GPT-4 128K (Latest)',
             'Anthropic: Claude v2.1 200K',
             'Meta: Llama v2 70B Chat',
-      #       'Google: Gemini Pro',
+            # 'Google: Gemini Pro',
                  ],
     )
+    if chosen_model == 'OpenAI: GPT-3.5 16K':
+        st.session_state.selected_model = 'openai/gpt-3.5-turbo-16k'
+    if chosen_model == 'OpenAI: GPT-4 32K':
+        st.session_state.selected_model = 'openai/gpt-4-32k'
     if chosen_model == 'OpenAI: GPT-3.5 16K (Latest)':
         st.session_state.selected_model = 'openai/gpt-3.5-turbo-1106'
     if chosen_model == 'OpenAI: GPT-4 128K (Latest)':
