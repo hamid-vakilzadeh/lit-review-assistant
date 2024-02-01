@@ -135,8 +135,8 @@ def article_search():
                     st.slider(
                         label="**Year**",
                         min_value=1990,
-                        max_value=2023,
-                        value=[2000, 2023],
+                        max_value=2024,
+                        value=[2000, 2024],
                         step=1,
                         key="year")
 
