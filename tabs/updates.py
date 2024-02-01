@@ -8,8 +8,8 @@ def updates():
         """
         - The database now contains more than 60,000 articles from the top 25 journals ranked on [BYU Accounting Ranking](https://www.byuaccounting.net/tenure/journalsincluded.php)
         - Added "Clear All Pinned" button to the sidebar.
-        - Added "Clear Chat" Button (i.e. keep the pinned articles and clear the current chat.
-        - Added "Research Project Page" to the sidebar (we collect your feedback for research purposes).
+        - Added "Clear" Button for Chat (i.e. keep the pinned articles and clear the current chat).
+        - Added "Feedback Page" to the sidebar (we collect your feedback for research purposes).
         """
     )
 
