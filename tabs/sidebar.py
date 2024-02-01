@@ -146,7 +146,21 @@ def show_sidebar():
             horizontal=True,
         )
         # st.subheader(f"Selected pieces for review: {len(st.session_state.review_pieces)}")
-
+        disable_status = True
+        if st.session_state.pinned_articles or st.session_state.pinned_pdfs:
+            disable_status = False
+        st.button(
+            label="Clear all pinned",
+            key="clear_pinned",
+            on_click=lambda: [
+                st.session_state.pop("pinned_articles", None),
+                st.session_state.pop("pinned_pdfs", None),
+                st.session_state.pop("review_pieces", None),
+            ],
+            type="secondary",
+            disabled=disable_status,
+            use_container_width=True,
+        )
         if st.session_state.show_pinned == f"Abstracts: {len(st.session_state.pinned_articles)}":
             st.markdown("Articles that you have found in the **Articles** tab.")
             for article in st.session_state.pinned_articles:
