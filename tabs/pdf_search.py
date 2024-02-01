@@ -53,7 +53,7 @@ def pdf_quick_summary(
             Your job is to synthesize this paper. Try to make it concise and short.
         
             ALWAYS use citations following these rules: 
-            - Always start with the APA name and year of the paper and make it clear that you talking about this paper
+            - Always start with the APA name and year of the paper and make it clear that you are talking about this paper
             - Do not use 'this paper' or similar phrases when referring to the current study. Otherwise you will be penalized.
             - If you find other cited paper, you should attribute relevant part to relevant studies.
             - Third, Any other paragraphs that have no citations should be attributed to authors of the current study. 
