@@ -102,3 +102,4 @@ def ensure_session_state_vars():
 
     if 'change_name' not in st.session_state:
         st.session_state.change_name = False
+
