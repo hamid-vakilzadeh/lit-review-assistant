@@ -55,12 +55,19 @@ def get_document(_messages_ref, message_id):
 def add_new_message(
         messages_ref,
         last_updated,
+        chat_name="Untitled",
+        message_content=None,
+        pinned_articles=None,
+        pinned_pdfs=None
 ):
     document_ref = messages_ref.document()
     document_ref.set(
         {
             "last_updated": last_updated,
-            "chat_name": "Untitled"
+            "chat_name": chat_name,
+            "chat": message_content,
+            "articles": pinned_articles,
+            "pdfs": pinned_pdfs
         }
     )
 
