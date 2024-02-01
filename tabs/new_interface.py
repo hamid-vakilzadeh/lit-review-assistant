@@ -33,6 +33,22 @@ def clear_chat():
     change_chat()
 
 
+def clear_chat_only():
+    delete_document(
+        messages_ref=st.session_state.messages_ref,
+        message_id=st.session_state.chat_id,
+    )
+    add_new_message(
+        st.session_state.messages_ref,
+        last_updated=time.time(),
+        chat_name=st.session_state.current_chat_name,
+        message_content=[],
+        pinned_articles=st.session_state.pinned_articles,
+        pinned_pdfs=st.session_state.pinned_pdfs
+    )
+    clear_chat()
+
+
 def delete_and_clear():
     delete_document(
         messages_ref=st.session_state.messages_ref,
@@ -189,7 +205,7 @@ def chat_name():
                 on_click=lambda: update_chat_name(),
             )
     else:
-        name, edit_button, delete_chat, new_chat = st.columns([4, 1, 1, 1])
+        name, edit_button, clear_chat_btn, delete_chat, new_chat = st.columns([3, 1, 1, 1, 1])
         name.subheader(st.session_state.current_chat_name)
         # change chat name
         edit_button.button(
@@ -200,6 +216,15 @@ def chat_name():
             on_click=lambda: set_chat_name(),
         )
         # clear chat button
+        clear_chat_btn.button(
+            label="Clear",
+            key="clear_chat",
+            use_container_width=True,
+            type='primary',
+            on_click=lambda: clear_chat_only(),
+        )
+
+        # delete chat button
         delete_chat.button(
             label="Delete",
             key="delete_chat",
