@@ -5,7 +5,6 @@ from utils.ai import ai_completion
 from utils.doi import get_apa_citation
 from utils.funcs import pin_piece, unpin_piece
 from pandas import read_csv
-from typing import Optional
 import json
 
 
@@ -16,30 +15,25 @@ def get_journal_names():
 
 def prep_gpt_summary(
         document,
-        bullet_point: bool,
-        number_of_words: Optional[int] = None
 ) -> list:
-    if bullet_point:
-        summary_style = 'provide a list of 3 to 5 very very short ' \
-                        'bullet points of the major points of the study and its findings. ' \
-                        'always use bullet points, unless it absolutely makes no sense.\n'
-    else:
-        summary_style = 'provide a very short summary of the research article and  its findings. Do not ramble!\n'
-
-    if number_of_words:
-        summary_style += f'Keep your summary below {number_of_words} words long.\n'
 
     messages = [
-        {"role": "system", "content": "You are a research assistant and you should help "
-                                      "the professor with his research."},
-        {"role": "user", "content": (f"{summary_style}"
-                                     "always use APA style and always mention the citation.\n"
-                                     "e.g. ... et al. (2022) find that ... or similar.\n"
-                                     f"This is the abstract: {document['text']}\n"
-                                     f"and this is the reference: {document['citation'][0]}\n "
-                                     f"Begin\n "
-                                     )
-         },
+        {
+            "role": "system",
+            "content": "You are a research assistant and you should help the professor with their research. "
+                       "You will be provided with an abstract. "
+                       "Your task is to summarize the abstract. Use inline APA style to cite the paper once. "
+                       "Provide a list of 3 to 5 very short bullet points to summarize the paper. "
+                       "Keep your summary below 100 words."
+        },
+        {
+            "role": "user",
+            "content": (
+                f"Summarize this is abstract in a few bullet points: <abstract>{document['text']}<abstract>\n"
+                f"<citation>{document['citation'][0]}<citation>\n "
+                f"Begin\n "
+            )
+        },
     ]
 
     return messages
@@ -57,28 +51,31 @@ def generate_completion(article):
     # generate the prompt
     prompt = prep_gpt_summary(
         article,
-        bullet_point=True,
-        number_of_words=st.session_state.max_words
     )
 
-    response = ai_completion(
-        messages=prompt,
-        model=st.session_state.selected_model,
-        temperature=st.session_state.temperature,
-        max_tokens=1500,
-        stream=True,
-    )
-    collected_chunks = []
-    report = []
-    for line in response.iter_lines():
-        if line and 'data' in line.decode('utf-8'):
-            content = line.decode('utf-8').replace('data: ', '')
-            if 'content' in content:
-                message = json.loads(content, strict=False)
-                collected_chunks.append(message)  # save the event response
-                report.append(message['choices'][0]['delta']['content'])
-                st.session_state.last_response = "".join(report).strip()
-                yield st.session_state.last_response
+    try:
+        response = ai_completion(
+            messages=prompt,
+            model=st.session_state.selected_model,
+            temperature=0.3,
+            # max_tokens=1500,
+            stream=True,
+        )
+        collected_chunks = []
+        report = []
+        for line in response.iter_lines():
+            if line and 'data' in line.decode('utf-8'):
+                content = line.decode('utf-8').replace('data: ', '')
+                if 'content' in content:
+                    message = json.loads(content, strict=False)
+                    collected_chunks.append(message)  # save the event response
+                    report.append(message['choices'][0]['delta']['content'])
+                    st.session_state.last_response = "".join(report).strip()
+                    yield st.session_state.last_response
+
+    except Exception as e:
+        st.error(f"The AI is not responding. Please try again or choose another model.")
+        st.stop()
 
 
 def sort_results(sort_method):
@@ -138,8 +135,8 @@ def article_search():
                     st.slider(
                         label="**Year**",
                         min_value=1990,
-                        max_value=2023,
-                        value=[2000, 2023],
+                        max_value=2024,
+                        value=[2000, 2024],
                         step=1,
                         key="year")
 
@@ -156,18 +153,26 @@ def article_search():
                 else:
                     my_journals = None
 
-            # 3 colmns for submit form button
+            # 3 columns for submit form button
             a1, a2 = st.columns([5, 1])
 
-            a1.text_input(
-                label="**author name**",
-                placeholder=" author search (coming soon...)",
-                key="author_search",
+            a1.text_area(
+                label="**DOI**",
+                placeholder="Enter DOI(s) one per line",
+                key="doi_search",
                 label_visibility="collapsed",
-                disabled=True
             )
 
-            # 3 colmns for submit form button
+            a1.markdown("OR")
+            # a1.text_input(
+            #    label="**author name**",
+            #    placeholder=" author search (coming soon...)",
+            #    key="author_search",
+            #    label_visibility="collapsed",
+            #    disabled=True
+            # )
+
+            # 3 columns for submit form button
             s1, s2 = st.columns([5, 1])
 
             s1.text_input(
@@ -207,134 +212,107 @@ def article_search():
                     use_container_width=True,
                 )
 
-    if article_search_button:
-        if st.session_state.search.strip() == "":
-            st.toast(":red[Please Enter a Search Topic.]", icon="⚠️")
-            return
-        else:
-            msg = st.toast("Searching for articles...", icon="🔍")
-            st.session_state.article_search_results = documentSearch.find_docs(
-                topic=st.session_state.search.strip(),
-                number_of_docs=st.session_state.number_of_articles,
-                year_range=[st.session_state.year[0], st.session_state.year[1]],
-                journal=my_journals,
-                contains=exact_matched,
-                condition=logical_operator,
-                # author=st.session_state.author_search
-            )
-            msg.toast(f"Showing **{len(st.session_state.article_search_results)}** articles", icon="📚")
-        if len(st.session_state.article_search_results) == 0:
-            st.toast("No articles found. Please try again.", icon="❗")
-
-    # display the articles
-    for article in st.session_state.article_search_results:
-        # search the sql database for the article summary/bullet points
-        st.markdown(f"**{article['title']}**, *{article['journal']} {article['year']}* {article['doi']}")
-
-        st.markdown(f"*{article['authors']}*")
-
-        # generate a state for the regenerate button
-        if f"regenerate_{article['id']}" not in st.session_state:
-            st.session_state[f"regenerate_{article['id']}"] = False
-
-        # write journal name
-        st.markdown(
-            # f"**Relevance Score**: *{article['relevance']}%* | "
-            f"**CrossRef Citations**: *{article['cite_counts']}*"
-        )
-
-        # two columns for buttons
-        left_column, right_column = st.columns(2)
-
-        with left_column:
-            # if article is not added to notes show add notes
-            if article not in st.session_state.pinned_articles:
-                st.button(
-                    label="📌 **pin**",
-                    key=article['id'],
-                    type='primary',
-                    use_container_width=True,
-                    on_click=pin_piece,
-                    args=(article, st.session_state.pinned_articles,)
-                )
-
+        if article_search_button:
+            if st.session_state.search.strip() == "" and st.session_state.doi_search.strip() == "":
+                st.toast(":red[Please Enter a Search Topic or a DOI.]", icon="⚠️")
+                return
             else:
-                # if already added to notes show remove notes
-                st.button(
-                    label="↩️ **unpin**",
-                    key=article['id'],
-                    type='secondary',
-                    use_container_width=True,
-                    on_click=unpin_piece,
-                    args=(article, st.session_state.pinned_articles,)
-
+                msg = st.toast("Searching for articles...", icon="🔍")
+                st.session_state.article_search_results = documentSearch.find_docs(
+                    topic=st.session_state.search.strip(),
+                    number_of_docs=st.session_state.number_of_articles,
+                    year_range=[st.session_state.year[0], st.session_state.year[1]],
+                    doi=st.session_state.doi_search.strip(),
+                    journal=my_journals,
+                    contains=exact_matched,
+                    condition=logical_operator,
+                    # author=st.session_state.author_search
                 )
+                msg.toast(f"Showing **{len(st.session_state.article_search_results)}** articles", icon="📚")
+            if len(st.session_state.article_search_results) == 0:
+                st.toast("No articles found. Please try again.", icon="❗")
 
-        with right_column:
-            # if article has a summary show regenerate summary
-            if article['id'] in st.session_state.summaries.keys():
-                st.button(
-                    label="Regenerate Summary",
-                    key=f"regenerate_{article['id']}",
-                    type='secondary',
-                    use_container_width=True
-                )
+        # display the articles
+        for article in st.session_state.article_search_results:
+            # search the sql database for the article summary/bullet points
+            st.markdown(f"**{article['title']}**, *{article['journal']} {article['year']}* {article['doi']}")
 
-        # radio buttons for abstract or summary
-        index = 0
+            st.markdown(f"*{article['authors']}*")
 
-        # set the default radio button to summary if the regenerate button is clicked
-        if st.session_state[f"regenerate_{article['id']}"]:
-            index = 1
+            # generate a state for the regenerate button
+            if f"regenerate_{article['id']}" not in st.session_state:
+                st.session_state[f"regenerate_{article['id']}"] = False
 
-        st.radio(
-            label="Abstract or Summary",
-            options=['Abstract', 'Summary'],
-            key=f"radio_{article['id']}",
-            index=index,
-            horizontal=True,
-            label_visibility='collapsed'
-
-        )
-        # placeholder for summary and abstract
-        st.session_state[f"{article['id']}_container"] = st.empty()
-
-        # if radio button is abstract
-        if st.session_state[f"radio_{article['id']}"] == 'Abstract':
-            st.session_state[f"{article['id']}_container"].markdown(
-                f'{article["text"]}'
+            # write journal name
+            st.markdown(
+                # f"**Relevance Score**: *{article['relevance']}%* | "
+                f"**CrossRef Citations**: *{article['cite_counts']}*"
             )
-        # if radio button is summary
-        if st.session_state[f"radio_{article['id']}"] == 'Summary':
+
+            # two columns for buttons
+            left_column, right_column = st.columns(2)
+
+            with left_column:
+                # if article is not added to notes show add notes
+                if article not in st.session_state.pinned_articles:
+                    st.button(
+                        label="📌 **pin**",
+                        key=article['id'],
+                        type='primary',
+                        use_container_width=True,
+                        on_click=pin_piece,
+                        args=(article, st.session_state.pinned_articles,)
+                    )
+
+                else:
+                    # if already added to notes show remove notes
+                    st.button(
+                        label="↩️ **unpin**",
+                        key=article['id'],
+                        type='secondary',
+                        use_container_width=True,
+                        on_click=unpin_piece,
+                        args=(article, st.session_state.pinned_articles,)
+
+                    )
+
+            with right_column:
+                # if article has a summary show regenerate summary
+                if article['id'] in st.session_state.summaries.keys():
+                    st.button(
+                        label="Regenerate Summary",
+                        key=f"regenerate_{article['id']}",
+                        type='secondary',
+                        use_container_width=True
+                    )
+
+            # radio buttons for abstract or summary
+            index = 0
+
+            # set the default radio button to summary if the regenerate button is clicked
             if st.session_state[f"regenerate_{article['id']}"]:
-                # stream the summary in the box
-                with st.session_state[f"{article['id']}_container"]:
-                    for response_chunk in generate_completion(article=article):
-                        st.session_state[f"{article['id']}_container"].markdown(f'{response_chunk}')
+                index = 1
 
-                # save the summary in the session state
-                st.session_state.summaries[article['id']] = st.session_state.last_response
+            st.radio(
+                label="Abstract or Summary",
+                options=['Abstract', 'Summary'],
+                key=f"radio_{article['id']}",
+                index=index,
+                horizontal=True,
+                label_visibility='collapsed'
 
-                # delete the last response to avoid contamination
-                st.session_state.pop('last_response', None)
+            )
+            # placeholder for summary and abstract
+            st.session_state[f"{article['id']}_container"] = st.empty()
 
-            # if summary is already generated show it
-            elif article['id'] in st.session_state.summaries.keys():
+            # if radio button is abstract
+            if st.session_state[f"radio_{article['id']}"] == 'Abstract':
                 st.session_state[f"{article['id']}_container"].markdown(
-                    f'{st.session_state.summaries[article["id"]]}'
+                    f'{article["text"]}'
                 )
-
-            # if not generated show the button
-            elif article['id'] not in st.session_state.summaries.keys():
-                st.session_state[f"{article['id']}_container"].button(
-                    label="Get AI Generated Summary",
-                    key=f"summarize_{article['id']}",
-                    type='secondary'
-                )
-
-                # if button is clicked generate the summary
-                if st.session_state[f"summarize_{article['id']}"]:
-
+            # if radio button is summary
+            if st.session_state[f"radio_{article['id']}"] == 'Summary':
+                if st.session_state[f"regenerate_{article['id']}"]:
                     # stream the summary in the box
                     with st.session_state[f"{article['id']}_container"]:
                         for response_chunk in generate_completion(article=article):
@@ -346,9 +324,37 @@ def article_search():
                     # delete the last response to avoid contamination
                     st.session_state.pop('last_response', None)
 
-                    # update the session state
-                    st.experimental_rerun()
+                # if summary is already generated show it
+                elif article['id'] in st.session_state.summaries.keys():
+                    st.session_state[f"{article['id']}_container"].markdown(
+                        f'{st.session_state.summaries[article["id"]]}'
+                    )
 
-        st.markdown('---')
+                # if not generated show the button
+                elif article['id'] not in st.session_state.summaries.keys():
+                    st.session_state[f"{article['id']}_container"].button(
+                        label="Get AI Generated Summary",
+                        key=f"summarize_{article['id']}",
+                        type='secondary'
+                    )
 
-    # st.write(st.session_state)
+                    # if button is clicked generate the summary
+                    if st.session_state[f"summarize_{article['id']}"]:
+
+                        # stream the summary in the box
+                        with st.session_state[f"{article['id']}_container"]:
+                            for response_chunk in generate_completion(article=article):
+                                st.session_state[f"{article['id']}_container"].markdown(f'{response_chunk}')
+
+                        # save the summary in the session state
+                        st.session_state.summaries[article['id']] = st.session_state.last_response
+
+                        # delete the last response to avoid contamination
+                        st.session_state.pop('last_response', None)
+
+                        # update the session state
+                        st.rerun()
+
+            st.markdown('---')
+
+            # st.write(st.session_state)

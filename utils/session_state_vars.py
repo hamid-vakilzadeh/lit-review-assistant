@@ -1,4 +1,10 @@
 import streamlit as st
+import json
+import pyrebase
+from google.oauth2 import service_account
+from google.cloud import firestore
+from utils.firestore_db import create_new_profile, add_user_to_db
+from time import time
 
 
 def ensure_session_state_vars():
@@ -48,3 +54,52 @@ def ensure_session_state_vars():
     # session state for last PDF summary
     if 'last_pdf_summary_response' not in st.session_state:
         st.session_state.last_pdf_summary_response = ''
+
+    if "messages_to_api" not in st.session_state:
+        st.session_state.messages_to_api = [
+            {
+                "role": "system",
+                "content": "You are a research assistant and you should help the professor with their research. "
+                           "You will be provided with documents in the chat and some requests. Always refer to the context of the chat "
+                           "for papers. Focus on the papers that the user provides as they change. Apologies are not necessary. "
+                           "NEVER EVER use solely your own knowledge to answer questions. "
+                           "Your task is to answer the question using only the provided research articles and to cite the passage(s) "
+                           "of the document used to answer the question in inline APA style. If the document does not contain the "
+                           "information needed to answer this question then simply write: cannot answer because the context "
+                           "does not contain the information. "
+                           "If an answer to the question is provided, it must be annotated with a citation. "
+            }
+        ]
+
+    if "messages_to_api_context" not in st.session_state:
+        st.session_state.messages_to_api_context = []
+
+    if "messages_to_interface_context" not in st.session_state:
+        st.session_state.messages_to_interface_context = []
+
+    if "db" not in st.session_state:
+        key_dict = json.loads(st.secrets["textkey"])
+        creds = service_account.Credentials.from_service_account_info(key_dict)
+        st.session_state.db = firestore.Client(credentials=creds, project="lit-review-d9a4b")
+
+    if 'firebase' not in st.session_state:
+        pyrebaseConfig = json.loads(st.secrets["pyrebaseConfig"])
+        st.session_state.firebase = pyrebase.initialize_app(pyrebaseConfig)
+
+    if 'auth' not in st.session_state:
+        st.session_state.auth = st.session_state.firebase.auth()
+
+    if 'user' in st.session_state and 'profile_details' not in st.session_state:
+        create_new_profile(st.session_state.db, st.session_state.user['localId'])
+
+    if 'session_start_time' in st.session_state:
+        if time() - st.session_state.session_start_time > 3000:
+            st.session_state.user = st.session_state.auth.refresh(st.session_state.user['refreshToken'])
+
+        elif time() - st.session_state.session_start_time > 3600:
+            st.session_state.clear()
+            st.rerun()
+
+    if 'change_name' not in st.session_state:
+        st.session_state.change_name = False
+
