@@ -109,7 +109,7 @@ def choose_model():
             'OpenAI: GPT-4 128K (Latest)',
             'Anthropic: Claude v2.1 200K',
             'Meta: Llama v2 70B Chat',
-            # 'Google: Gemini Pro',
+            'Google: Gemini Pro',
                  ],
     )
     if chosen_model == 'OpenAI: GPT-3.5 16K':
@@ -124,8 +124,8 @@ def choose_model():
         st.session_state.selected_model = 'anthropic/claude-2'
     if chosen_model == 'Meta: Llama v2 70B Chat':
         st.session_state.selected_model = 'meta-llama/llama-2-70b-chat'
-    # if chosen_model == 'Google: Gemini Pro':
-    #     st.session_state.selected_model = 'google/gemini-pro'
+    if chosen_model == 'Google: Gemini Pro':
+        st.session_state.selected_model = 'google/gemini-pro'
 
 
 def show_sidebar():
