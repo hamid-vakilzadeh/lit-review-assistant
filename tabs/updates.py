@@ -3,10 +3,10 @@ import streamlit as st
 
 def updates():
     st.header("Change log")
-    st.subheader("March 15, 2024")
+    st.subheader("May 14, 2024")
     st.markdown(
         """
-        - Google Gemini Pro model is now available for generating responses.
+        - GPT-4o is now available for generating responses.
         """
     )
 
@@ -17,6 +17,13 @@ def updates():
         - Enhanced article search capabilities.
         - Fixing a bug where the PDF responses are not accurate.
         - Fixing a bug where the context is not updated when the user changes the chat.
+        """
+    )
+
+    st.subheader("March 15, 2024")
+    st.markdown(
+        """
+        - Google Gemini Pro model is now available for generating responses.
         """
     )
 
