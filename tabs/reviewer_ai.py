@@ -237,7 +237,6 @@ def messages_for_research_designer(summary_text: str):
     return messages
 
 
-@st.cache_data(ttl=3600)
 def get_pdf_text(file) -> dict:
     file = PdfReader(file)
     # create a vector store
@@ -289,7 +288,6 @@ def check_and_return_messages_as_literal(messages: list) -> dict:
         print(summary)
 
 
-@st.cache_data(ttl=3600, show_spinner=False)
 def get_relevant_pieces(_docs):
     responses = []
     my_bar = st.progress(0, text=f"Starting to Reading the Paper...")
@@ -316,7 +314,6 @@ def get_relevant_pieces(_docs):
     return responses
 
 
-@st.cache_data(ttl=3600, show_spinner=False)
 def convert_responses_to_df(responses: list[dict]) -> pd.DataFrame:
     df = pd.DataFrame(responses)
     df.reset_index(inplace=True)
@@ -324,7 +321,6 @@ def convert_responses_to_df(responses: list[dict]) -> pd.DataFrame:
 
 
 @retry(tries=3, delay=2)
-@st.cache_data(ttl=3600, show_spinner=False)
 def get_complete_review(df: pd.DataFrame) -> str:
     sections = ['paper_info', 'research_question', 'research_design', 'sample_selection', 'measures_definition', 'results', 'limitation']
     whole_summary = ''
