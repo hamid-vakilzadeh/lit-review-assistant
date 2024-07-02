@@ -34,7 +34,8 @@ def agent(messages: list, max_tokens: int = 4096, json_format=False) -> str:
             messages=messages,
             max_tokens=max_tokens,
             temperature=0.3,
-            response_format=response_type
+            response_format=response_type,
+            seed=1234
 
         )
         if response.choices[0].finish_reason == "stop":
@@ -396,7 +397,6 @@ def reviewer_ai():
             on_click=lambda : st.session_state.pop('comprehensive_summary', None)
         )
     if submitted:
-        print(f'Processing {st.session_state.uploaded_file.name}')
         # Load the PDF file
         st.session_state.text = get_pdf_text(st.session_state.uploaded_file)
 
@@ -414,8 +414,8 @@ def reviewer_ai():
 
     if 'comprehensive_summary' in st.session_state:
         st.download_button(
-            label="Download summary",
+            label="Download Review",
             data=mdtex2html.convert(st.session_state.comprehensive_summary),
-            file_name='summary.html',
+            file_name=f'review_{st.session_state.uploaded_file.name}.html',
             mime='text/markdown',
         )
