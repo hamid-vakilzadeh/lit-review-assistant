@@ -1,8 +1,8 @@
 import streamlit as st
 from utils.ai import ai_completion
-from utils.funcs import set_command_none, set_command_search, set_command_pdf, pin_piece
+from utils.funcs import set_command_none, set_command_search, set_command_pdf, set_command_review, pin_piece
 import json
-from tabs import article_search, pdf_search, sidebar
+from tabs import article_search, pdf_search, sidebar, reviewer_ai
 import time
 
 from utils.firestore_db import (
@@ -297,6 +297,15 @@ def new_interface():
             type='secondary',
             on_click=lambda: set_command_none(),
         )
+        if st.session_state.user['email'] in ['vakilzas@uww.edu', 'davidwood@byu.edu']:
+            st.button(
+                label='**Comprehensive Review**',
+                key='comprehensive_review',
+                type='primary',
+                use_container_width=True,
+                on_click=lambda: set_command_review(),
+
+            )
 
     if "messages_to_interface" not in st.session_state:
         try:
@@ -414,4 +423,7 @@ def new_interface():
         #     st.session_state.messages_to_interface.append({"role": "user", "content": user_input})
         pdf_search.pdf_search()
 
-# st.write(st.session_state.messages_to_api_context)
+    elif st.session_state.command == "\\review":
+        reviewer_ai.reviewer_ai()
+
+# st.write(st.session_state)
