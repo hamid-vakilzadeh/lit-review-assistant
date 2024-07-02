@@ -66,6 +66,11 @@ def set_command_pdf():
     clean_and_close_search()
 
 
+def set_command_review():
+    st.session_state.command = "\\review"
+    clean_and_close_search()
+
+
 def review_action_buttons(article, state_var):
     # create 2 columns for the buttons
     col1, col2 = st.columns(2)
