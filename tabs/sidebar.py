@@ -79,7 +79,8 @@ def request_access():
 
 
 def login_and_reset_password():
-    login, reset, request = st.tabs(['Login', 'Reset Password', 'Request Access'])
+    col1, col2, col3 = st.columns([1, 2, 1])
+    login, reset, request = col2.tabs(['Login', 'Reset Password', 'Request Access'])
     with login:
         show_login()
     with reset:
@@ -105,69 +106,70 @@ def choose_model():
         options=[
             'OpenAI: GPT-4o',
             'OpenAI: GPT-3.5 16K',
-            'Anthropic: Claude v2.1 200K',
-            'Meta: Llama v2 70B Chat',
-            'Google: Gemini Pro',
+            'Anthropic: Claude 3.5 Sonnet',
+            'Meta: Llama 3 70B Instruct (nitro)',
+            'Google: Gemini Flash 1.5',
                  ],
     )
     if chosen_model == 'OpenAI: GPT-3.5 16K':
         st.session_state.selected_model = 'openai/gpt-3.5-turbo-16k'
     if chosen_model == 'OpenAI: GPT-4o':
         st.session_state.selected_model = 'openai/gpt-4o'
-    if chosen_model == 'Anthropic: Claude v2.1 200K':
-        st.session_state.selected_model = 'anthropic/claude-2'
-    if chosen_model == 'Meta: Llama v2 70B Chat':
-        st.session_state.selected_model = 'meta-llama/llama-2-70b-chat'
-    if chosen_model == 'Google: Gemini Pro':
-        st.session_state.selected_model = 'google/gemini-pro'
+    if chosen_model == 'Anthropic: Claude 3.5 Sonnet':
+        st.session_state.selected_model = 'anthropic/claude-3.5-sonnet'
+    if chosen_model == 'Meta: Llama 3 70B Instruct (nitro)':
+        st.session_state.selected_model = 'meta-llama/llama-3-70b-instruct:nitro'
+    if chosen_model == 'Google: Gemini Flash 1.5':
+        st.session_state.selected_model = 'google/gemini-flash-1.5'
 
 
 def show_sidebar():
     # sidebar
     with st.sidebar:
-        choose_model()
-        st.header("📌 My Pinboard")
-        st.markdown("You can keep track of abstract, summaries, and reviews "
-                    "that you pin while you are reviewing the literature. "
-                    )
-        st.radio(
-            label="Show Pinned:",
-            options=[
-                f"Abstracts: {len(st.session_state.pinned_articles)}",
-                f"PDF pieces: {len(st.session_state.pinned_pdfs)}",
-            ],
-            key="show_pinned",
-            horizontal=True,
-        )
-        # st.subheader(f"Selected pieces for review: {len(st.session_state.review_pieces)}")
-        disable_status = True
-        if st.session_state.pinned_articles or st.session_state.pinned_pdfs:
-            disable_status = False
-        st.button(
-            label="Clear all pinned",
-            key="clear_pinned",
-            on_click=lambda: [
-                st.session_state.pop("pinned_articles", None),
-                st.session_state.pop("pinned_pdfs", None),
-                st.session_state.pop("review_pieces", None),
-            ],
-            type="secondary",
-            disabled=disable_status,
-            use_container_width=True,
-        )
-        if st.session_state.show_pinned == f"Abstracts: {len(st.session_state.pinned_articles)}":
-            st.markdown("Articles that you have found in the **Articles** tab.")
-            for article in st.session_state.pinned_articles:
-                st.markdown(f"**{article['title']}**")
-                review_action_buttons(article, st.session_state.pinned_articles)
-                st.markdown(f"{article['doi'].strip()}" ,)
-                st.markdown(f"{article['text']}")
-                st.markdown("---")
-        elif st.session_state.show_pinned == f"PDF pieces: {len(st.session_state.pinned_pdfs)}":
-            st.markdown("Summaries that you have created in the **MyPDF** tab.")
-            for piece in st.session_state.pinned_pdfs:
-                st.markdown(f"**{piece['citation'][0].strip()}**")
-                review_action_buttons(piece, st.session_state.pinned_pdfs)
-                st.markdown(f"{piece['prompt']}")
-                st.markdown(f"{piece['text']}")
-                st.markdown("---")
+        # choose_model()
+        with st.container(height=900):
+            st.header("📌 My Pinboard")
+            st.markdown("You can keep track of abstract, summaries, and reviews "
+                        "that you pin while you are reviewing the literature. "
+                        )
+            st.radio(
+                label="Show Pinned:",
+                options=[
+                    f"Abstracts: {len(st.session_state.pinned_articles)}",
+                    f"PDF pieces: {len(st.session_state.pinned_pdfs)}",
+                ],
+                key="show_pinned",
+                horizontal=True,
+            )
+            # st.subheader(f"Selected pieces for review: {len(st.session_state.review_pieces)}")
+            disable_status = True
+            if st.session_state.pinned_articles or st.session_state.pinned_pdfs:
+                disable_status = False
+            st.button(
+                label="Clear all pinned",
+                key="clear_pinned",
+                on_click=lambda: [
+                    st.session_state.pop("pinned_articles", None),
+                    st.session_state.pop("pinned_pdfs", None),
+                    st.session_state.pop("review_pieces", None),
+                ],
+                type="secondary",
+                disabled=disable_status,
+                use_container_width=True,
+            )
+            if st.session_state.show_pinned == f"Abstracts: {len(st.session_state.pinned_articles)}":
+                st.markdown("Articles that you have found in the **Articles** tab.")
+                for article in st.session_state.pinned_articles:
+                    st.markdown(f"**{article['title']}**")
+                    review_action_buttons(article, st.session_state.pinned_articles)
+                    st.markdown(f"{article['doi'].strip()}" ,)
+                    st.markdown(f"{article['text']}")
+                    st.markdown("---")
+            elif st.session_state.show_pinned == f"PDF pieces: {len(st.session_state.pinned_pdfs)}":
+                st.markdown("Summaries that you have created in the **MyPDF** tab.")
+                for piece in st.session_state.pinned_pdfs:
+                    st.markdown(f"**{piece['citation'][0].strip()}**")
+                    review_action_buttons(piece, st.session_state.pinned_pdfs)
+                    st.markdown(f"{piece['prompt']}")
+                    st.markdown(f"{piece['text']}")
+                    st.markdown("---")
