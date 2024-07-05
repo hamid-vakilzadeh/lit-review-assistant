@@ -33,10 +33,12 @@ def about():
 
 
 my_pages = [
-    st.Page(about, title='About', default=True, url_path='About.py'),
+    st.Page(about, title='Home', default=True, url_path='About.py'),
     st.Page("pages/1_AIRA App.py", title='AIRA Application'),
     st.Page("pages/2_Profile.py", title="Your Account"),
     st.Page("pages/3_Feedback.py", title="Feedback"),
+    st.Page("pages/4_logout.py"),
+
 ]
 
 if __name__ == '__main__':
@@ -53,75 +55,60 @@ if __name__ == '__main__':
     if 'user' not in st.session_state:
         col3, col4, about_button, login_col, col5, col6 = st.columns(6)
         with about_button:
-            st.button(
-                label="About",
+            st.page_link(
+                st.Page("About.py"),
+                label="Home",
+                icon=":material/home:",
                 use_container_width=True,
-                key='about_button',
-                type='primary'
-            )
-        with login_col:
-            st.button(
-                label="Login or Sign Up",
-                use_container_width=True,
-                type='primary',
-                key='login_button',
             )
 
-        if st.session_state.login_button:
-            st.switch_page("pages/1_AIRA App.py")
+        with login_col:
+            st.page_link(
+                st.Page("pages/1_AIRA App.py"),
+                label="**AIRA**",
+                icon=":material/support_agent:",
+                use_container_width=True,
+            )
 
     else:
         col1, col2, col3, col4, col5 = st.columns(5)
 
         with col1:
-            st.button(
-                label="About",
+            st.page_link(
+                st.Page("About.py"),
+                label="Home",
+                icon=":material/home:",
                 use_container_width=True,
-                key='about_button',
-                type='primary'
             )
+
         with col2:
-            st.button(
+            st.page_link(
+                st.Page("pages/1_AIRA App.py"),
                 label="**AIRA**",
+                icon=":material/support_agent:",
                 use_container_width=True,
-                key='aira_button',
-                type='primary'
             )
         with col3:
-            st.button(
+            st.page_link(
+                st.Page("pages/3_Feedback.py"),
                 label="Feedback",
+                icon=":material/feedback:",
                 use_container_width=True,
-                key='feedback_button',
-                type='primary'
             )
         with col4:
-            st.button(
+            st.page_link(
+                st.Page("pages/2_Profile.py"),
                 label="Your Account",
+                icon=":material/account_box:",
                 use_container_width=True,
-                key='profile_button',
-                type='primary'
             )
         with col5:
-            st.button(
-                label="**Logout**",
+            st.page_link(
+                st.Page("pages/4_logout.py"),
+                label="Logout",
+                icon=":material/logout:",
                 use_container_width=True,
-                key='logout_button',
-                type='secondary',
-                on_click=lambda: st.session_state.clear(),
-
             )
-
-        if st.session_state.aira_button:
-            st.switch_page("pages/1_AIRA App.py")
-
-        if st.session_state.profile_button:
-            st.switch_page("pages/2_Profile.py")
-
-        if st.session_state.feedback_button:
-            st.switch_page("pages/3_Feedback.py")
-
-    if st.session_state.about_button:
-        st.switch_page(st.Page("About.py"))
 
     pg = st.navigation(my_pages,
                        position='hidden'
