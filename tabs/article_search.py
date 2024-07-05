@@ -102,6 +102,7 @@ def update_filter():
     pass
 
 
+@st.experimental_fragment
 def article_search():
     st.subheader("Article Search")
     # user input for topic to search for
