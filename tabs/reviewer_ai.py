@@ -1,3 +1,5 @@
+import asyncio
+from openai import AsyncOpenAI
 import json
 from openai import OpenAI
 from cleantext.clean import clean
@@ -7,11 +9,9 @@ from ast import literal_eval
 from tqdm import tqdm
 import pandas as pd
 from retry import retry
-import chromadb
 import chromadb.utils.embedding_functions as embedding_functions
 import streamlit as st
 import mdtex2html
-
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
@@ -20,6 +20,7 @@ text_splitter = CharacterTextSplitter(
     chunk_size=2000,
     chunk_overlap=100
 )
+
 
 # Define the summarizer function
 @retry(tries=3, delay=2)
@@ -199,7 +200,7 @@ def message_for_details_of_variables(summary_text: str, variables_list: str):
              f"<summary starts>{summary_text} <summary ends>."
              f"<variables of interest>{variables_list}</variables of interest>"
              f"Only Return a json with the format above and nothing else."
-             # f"your response should be suitable for literal eval to read it as a list of dictionaries."
+         # f"your response should be suitable for literal eval to read it as a list of dictionaries."
          },
         {
             "role": "assistant",
@@ -376,12 +377,77 @@ def get_vars_definitions(vars: pd.DataFrame, summary_body) -> list:
     return list_of_vars_definitions
 
 
+aclient = AsyncOpenAI(
+    # This is the default and can be omitted
+    api_key=st.secrets["OPENAI_API_KEY"],
+)
+
+
+@retry(tries=5, delay=2, backoff=2, jitter=(1, 3))
+async def make_call(messages: list, max_tokens: int = 4096, json_format=False) -> str:
+    response_type = None
+    if json_format:
+        response_type = {"type": "json_object"}
+
+    response = await aclient.chat.completions.create(
+        messages=messages,
+        max_tokens=max_tokens,
+        response_format=response_type,
+        model="gpt-3.5-turbo",
+        temperature=0.3,
+        seed=1234
+    )
+    return response.choices[0].message.content
+
+
+def return_messages_as_literal(pieces: list[str]) -> list:
+    literal_pieces = []
+    for piece in pieces:
+        try:
+            response = literal_eval(piece.replace('My Answer:', '').replace('null', 'None'))
+            literal_pieces.append(response)
+        except:
+            pass
+    return literal_pieces
+
+
+async def main(_docs):
+    responses = []
+    my_bar = st.progress(0, text=f"Starting to Reading the Paper...")
+
+    tasks = [
+        make_call(
+            messages=messages_to_send_summarizer(
+                page_content=clean_text(item.page_content),
+                part_number=item.metadata['page_number'] + item.metadata['part_number'] + 1,
+                total_parts=len(_docs['texts'])
+            ),
+            json_format=True
+        )
+        for item in _docs['texts']
+    ]
+    i = 1
+    for task in asyncio.as_completed(tasks):
+        percent_complete = i / len(_docs['texts'])
+        summary = await task
+        responses.append(summary)
+        i += 1
+
+        my_bar.progress(
+            percent_complete,
+            text=f"Reading {percent_complete * 100:.2f}% completed."
+        )
+
+    return responses
+
+
 def reviewer_ai():
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.subheader('Reviewer AI')
+        # st.session_state.pop('relevant_pieces_list', None)
         with st.form(
-            key='form'
+                key='form'
         ):
             st.write('Upload a PDF file to get a comprehensive review of the paper')
             st.file_uploader(
@@ -392,19 +458,24 @@ def reviewer_ai():
             )
             submitted = st.form_submit_button(
                 label='Submit',
-                on_click=lambda : st.session_state.pop('comprehensive_summary', None)
+                on_click=lambda: st.session_state.pop('comprehensive_summary', None)
             )
         if submitted:
             # Load the PDF file
             st.session_state.text = get_pdf_text(st.session_state.uploaded_file)
 
             # get the relevant pieces
-            st.session_state.relevant_pieces_list = get_relevant_pieces(st.session_state.text)
+
+            st.session_state.relevant_pieces_list = asyncio.run(main(st.session_state.text))
+
             st.session_state.pop('text', None)
 
             # convert the responses to a dataframe
-            st.session_state.relevant_pieces_df = convert_responses_to_df(st.session_state.relevant_pieces_list)
+            st.session_state.relevant_pieces_df = convert_responses_to_df(
+                return_messages_as_literal(st.session_state.relevant_pieces_list)
+            )
             st.session_state.pop('relevant_pieces_list', None)
+
 
             # put together the summary:
             st.session_state.comprehensive_summary = get_complete_review(st.session_state.relevant_pieces_df)
