@@ -2,9 +2,10 @@ import streamlit as st
 from utils.firestore_db import update_profile_db, update_password
 from time import time
 
-def profile():
 
-    update_profile, change_password = st.tabs(["Update Profile", "Change Password"])
+def profile():
+    col1, col2, col3 = st.columns([1, 2, 1])
+    update_profile, change_password = col2.tabs(["Update Profile", "Change Password"])
 
     with update_profile:
         with st.form(key='Update Profile'):
