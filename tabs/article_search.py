@@ -116,54 +116,47 @@ def article_search():
                     )
         with st.form(key="article_search_form"):
 
-            left_column, right_column = st.columns(2)
+            st.session_state.number_of_articles = st.number_input(
+                "**Number of articles**",
+                min_value=1,
+                max_value=100,
+                value=4,
+                step=1,
+                key="num_articles"
+            )
 
-            with left_column:
-                sub_column1, sub_column2 = st.columns([2, 3])
-                with sub_column1:
-                    st.session_state.number_of_articles = st.number_input(
-                        "**Number of articles**",
-                        min_value=1,
-                        max_value=100,
-                        value=4,
-                        step=1,
-                        key="num_articles"
-                    )
+            # with sub_column2:
+            # select data range as year
+            st.slider(
+                label="**Year**",
+                min_value=1990,
+                max_value=2024,
+                value=[2000, 2024],
+                step=1,
+                key="year")
 
-                with sub_column2:
-                    # select data range as year
-                    st.slider(
-                        label="**Year**",
-                        min_value=1990,
-                        max_value=2024,
-                        value=[2000, 2024],
-                        step=1,
-                        key="year")
-
-            with right_column:
-                st.multiselect(
-                    label="**Select Journals** (leave empty for all journals)",
-                    options=get_journal_names(),
-                    format_func=lambda x: f"{x['journal']} ({x['number_of_articles']} articles)",
-                    key='selected_journal',
-                    disabled=False
-                )
-                if len(st.session_state.selected_journal) > 0:
-                    my_journals = [{k: v for k, v in d.items() if k != 'number_of_articles'} for d in st.session_state.selected_journal]
-                else:
-                    my_journals = None
+            st.multiselect(
+                label="**Select Journals** (leave empty for all journals)",
+                options=get_journal_names(),
+                format_func=lambda x: f"{x['journal']} ({x['number_of_articles']} articles)",
+                key='selected_journal',
+                disabled=False
+            )
+            if len(st.session_state.selected_journal) > 0:
+                my_journals = [{k: v for k, v in d.items() if k != 'number_of_articles'} for d in st.session_state.selected_journal]
+            else:
+                my_journals = None
 
             # 3 columns for submit form button
-            a1, a2 = st.columns([5, 1])
 
-            a1.text_area(
+            st.text_area(
                 label="**DOI**",
                 placeholder="Enter DOI(s) one per line",
                 key="doi_search",
                 label_visibility="collapsed",
             )
 
-            a1.markdown("OR")
+            st.markdown("OR")
             # a1.text_input(
             #    label="**author name**",
             #    placeholder=" author search (coming soon...)",
@@ -173,9 +166,9 @@ def article_search():
             # )
 
             # 3 columns for submit form button
-            s1, s2 = st.columns([5, 1])
 
-            s1.text_input(
+
+            st.text_input(
                 label="**Search a Topic**",
                 placeholder="search for a topic, "
                             "e.g. "
@@ -205,12 +198,11 @@ def article_search():
                 else:
                     logical_operator = None
 
-            with s2:
-                article_search_button = st.form_submit_button(
-                    label="Search",
-                    type="primary",
-                    use_container_width=True,
-                )
+            article_search_button = st.form_submit_button(
+                label="Search",
+                type="primary",
+                use_container_width=True,
+            )
 
         if article_search_button:
             if st.session_state.search.strip() == "" and st.session_state.doi_search.strip() == "":
@@ -233,114 +225,90 @@ def article_search():
                 st.toast("No articles found. Please try again.", icon="❗")
 
         # display the articles
-        for article in st.session_state.article_search_results:
-            # search the sql database for the article summary/bullet points
-            st.markdown(f"**{article['title']}**, *{article['journal']} {article['year']}* {article['doi']}")
+    with st.container(height=500):
+        if not st.session_state.article_search_results:
+            st.markdown("Search Results will be displayed here.")
+        else:
+            for article in st.session_state.article_search_results:
+                # search the sql database for the article summary/bullet points
+                st.markdown(f"**{article['title']}**, *{article['journal']} {article['year']}* {article['doi']}")
 
-            st.markdown(f"*{article['authors']}*")
+                st.markdown(f"*{article['authors']}*")
 
-            # generate a state for the regenerate button
-            if f"regenerate_{article['id']}" not in st.session_state:
-                st.session_state[f"regenerate_{article['id']}"] = False
+                # generate a state for the regenerate button
+                if f"regenerate_{article['id']}" not in st.session_state:
+                    st.session_state[f"regenerate_{article['id']}"] = False
 
-            # write journal name
-            st.markdown(
-                # f"**Relevance Score**: *{article['relevance']}%* | "
-                f"**CrossRef Citations**: *{article['cite_counts']}*"
-            )
-
-            # two columns for buttons
-            left_column, right_column = st.columns(2)
-
-            with left_column:
-                # if article is not added to notes show add notes
-                if article not in st.session_state.pinned_articles:
-                    st.button(
-                        label="📌 **pin**",
-                        key=article['id'],
-                        type='primary',
-                        use_container_width=True,
-                        on_click=pin_piece,
-                        args=(article, st.session_state.pinned_articles,)
-                    )
-
-                else:
-                    # if already added to notes show remove notes
-                    st.button(
-                        label="↩️ **unpin**",
-                        key=article['id'],
-                        type='secondary',
-                        use_container_width=True,
-                        on_click=unpin_piece,
-                        args=(article, st.session_state.pinned_articles,)
-
-                    )
-
-            with right_column:
-                # if article has a summary show regenerate summary
-                if article['id'] in st.session_state.summaries.keys():
-                    st.button(
-                        label="Regenerate Summary",
-                        key=f"regenerate_{article['id']}",
-                        type='secondary',
-                        use_container_width=True
-                    )
-
-            # radio buttons for abstract or summary
-            index = 0
-
-            # set the default radio button to summary if the regenerate button is clicked
-            if st.session_state[f"regenerate_{article['id']}"]:
-                index = 1
-
-            st.radio(
-                label="Abstract or Summary",
-                options=['Abstract', 'Summary'],
-                key=f"radio_{article['id']}",
-                index=index,
-                horizontal=True,
-                label_visibility='collapsed'
-
-            )
-            # placeholder for summary and abstract
-            st.session_state[f"{article['id']}_container"] = st.empty()
-
-            # if radio button is abstract
-            if st.session_state[f"radio_{article['id']}"] == 'Abstract':
-                st.session_state[f"{article['id']}_container"].markdown(
-                    f'{article["text"]}'
+                # write journal name
+                st.markdown(
+                    # f"**Relevance Score**: *{article['relevance']}%* | "
+                    f"**CrossRef Citations**: *{article['cite_counts']}*"
                 )
-            # if radio button is summary
-            if st.session_state[f"radio_{article['id']}"] == 'Summary':
+
+                # two columns for buttons
+                left_column, right_column = st.columns(2)
+
+                with left_column:
+                    # if article is not added to notes show add notes
+                    if article not in st.session_state.pinned_articles:
+                        st.button(
+                            label="📌 **pin**",
+                            key=article['id'],
+                            type='primary',
+                            use_container_width=True,
+                            on_click=pin_piece,
+                            args=(article, st.session_state.pinned_articles,)
+                        )
+
+                    else:
+                        # if already added to notes show remove notes
+                        st.button(
+                            label="↩️ **unpin**",
+                            key=article['id'],
+                            type='secondary',
+                            use_container_width=True,
+                            on_click=unpin_piece,
+                            args=(article, st.session_state.pinned_articles,)
+
+                        )
+
+                with right_column:
+                    # if article has a summary show regenerate summary
+                    if article['id'] in st.session_state.summaries.keys():
+                        st.button(
+                            label="Regenerate Summary",
+                            key=f"regenerate_{article['id']}",
+                            type='secondary',
+                            use_container_width=True
+                        )
+
+                # radio buttons for abstract or summary
+                index = 0
+
+                # set the default radio button to summary if the regenerate button is clicked
                 if st.session_state[f"regenerate_{article['id']}"]:
-                    # stream the summary in the box
-                    with st.session_state[f"{article['id']}_container"]:
-                        for response_chunk in generate_completion(article=article):
-                            st.session_state[f"{article['id']}_container"].markdown(f'{response_chunk}')
+                    index = 1
 
-                    # save the summary in the session state
-                    st.session_state.summaries[article['id']] = st.session_state.last_response
+                st.radio(
+                    label="Abstract or Summary",
+                    options=['Abstract', 'Summary'],
+                    key=f"radio_{article['id']}",
+                    index=index,
+                    horizontal=True,
+                    label_visibility='collapsed'
 
-                    # delete the last response to avoid contamination
-                    st.session_state.pop('last_response', None)
+                )
+                # placeholder for summary and abstract
+                st.session_state[f"{article['id']}_container"] = st.empty()
 
-                # if summary is already generated show it
-                elif article['id'] in st.session_state.summaries.keys():
+                # if radio button is abstract
+                if st.session_state[f"radio_{article['id']}"] == 'Abstract':
                     st.session_state[f"{article['id']}_container"].markdown(
-                        f'{st.session_state.summaries[article["id"]]}'
+                        f'{article["text"]}'
                     )
-
-                # if not generated show the button
-                elif article['id'] not in st.session_state.summaries.keys():
-                    st.session_state[f"{article['id']}_container"].button(
-                        label="Get AI Generated Summary",
-                        key=f"summarize_{article['id']}",
-                        type='secondary'
-                    )
-
-                    # if button is clicked generate the summary
-                    if st.session_state[f"summarize_{article['id']}"]:
-
+                # if radio button is summary
+                if st.session_state[f"radio_{article['id']}"] == 'Summary':
+                    if st.session_state[f"regenerate_{article['id']}"]:
                         # stream the summary in the box
                         with st.session_state[f"{article['id']}_container"]:
                             for response_chunk in generate_completion(article=article):
@@ -352,9 +320,37 @@ def article_search():
                         # delete the last response to avoid contamination
                         st.session_state.pop('last_response', None)
 
-                        # update the session state
-                        st.rerun()
+                    # if summary is already generated show it
+                    elif article['id'] in st.session_state.summaries.keys():
+                        st.session_state[f"{article['id']}_container"].markdown(
+                            f'{st.session_state.summaries[article["id"]]}'
+                        )
 
-            st.markdown('---')
+                    # if not generated show the button
+                    elif article['id'] not in st.session_state.summaries.keys():
+                        st.session_state[f"{article['id']}_container"].button(
+                            label="Get AI Generated Summary",
+                            key=f"summarize_{article['id']}",
+                            type='secondary'
+                        )
 
-            # st.write(st.session_state)
+                        # if button is clicked generate the summary
+                        if st.session_state[f"summarize_{article['id']}"]:
+
+                            # stream the summary in the box
+                            with st.session_state[f"{article['id']}_container"]:
+                                for response_chunk in generate_completion(article=article):
+                                    st.session_state[f"{article['id']}_container"].markdown(f'{response_chunk}')
+
+                            # save the summary in the session state
+                            st.session_state.summaries[article['id']] = st.session_state.last_response
+
+                            # delete the last response to avoid contamination
+                            st.session_state.pop('last_response', None)
+
+                            # update the session state
+                            st.rerun()
+
+                st.markdown('---')
+
+                # st.write(st.session_state)
