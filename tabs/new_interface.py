@@ -188,62 +188,66 @@ def create_new_chat():
 
 
 def chat_name():
-    if st.session_state.change_name:
-        with st.form(key='change_chat_name'):
-            name, change_button = st.columns([4, 1])
-            name.text_input(
-                label="Chat Name",
-                placeholder="Chat Name",
-                key="new_chat_name",
-                value=st.session_state.current_chat_name,
-                label_visibility="collapsed",
-            )
-            change_button.form_submit_button(
-                label="Save",
+    this_chat, that_chat = st.tabs(
+        [f"{st.session_state.current_chat_name}", " "],
+    )
+    with this_chat:
+        if st.session_state.change_name:
+            with st.form(key='change_chat_name'):
+                st.text_input(
+                    label="Chat Name",
+                    placeholder="Chat Name",
+                    key="new_chat_name",
+                    value=st.session_state.current_chat_name,
+                    label_visibility="collapsed",
+                )
+                st.form_submit_button(
+                    label="Save",
+                    use_container_width=True,
+                    type='primary',
+                    on_click=lambda: update_chat_name(),
+                )
+        else:
+
+            st.subheader(st.session_state.current_chat_name)
+            edit_button, clear_chat_btn, delete_chat, new_chat = st.columns([1, 1, 1, 1])
+            # change chat name
+            edit_button.button(
+                label="Edit",
+                key="edit_name",
                 use_container_width=True,
                 type='primary',
-                on_click=lambda: update_chat_name(),
+                on_click=lambda: set_chat_name(),
             )
-    else:
-        name, edit_button, clear_chat_btn, delete_chat, new_chat = st.columns([3, 1, 1, 1, 1])
-        name.subheader(st.session_state.current_chat_name)
-        # change chat name
-        edit_button.button(
-            label="Edit",
-            key="edit_name",
-            use_container_width=True,
-            type='primary',
-            on_click=lambda: set_chat_name(),
-        )
-        # clear chat button
-        clear_chat_btn.button(
-            label="Clear",
-            key="clear_chat",
-            use_container_width=True,
-            type='primary',
-            on_click=lambda: clear_chat_only(),
-        )
+            # clear chat button
+            clear_chat_btn.button(
+                label="Clear",
+                key="clear_chat",
+                use_container_width=True,
+                type='primary',
+                on_click=lambda: clear_chat_only(),
+            )
 
-        # delete chat button
-        delete_chat.button(
-            label="Delete",
-            key="delete_chat",
-            use_container_width=True,
-            type='secondary',
-            on_click=lambda: delete_and_clear(),
-        )
+            # delete chat button
+            delete_chat.button(
+                label="Delete",
+                key="delete_chat",
+                use_container_width=True,
+                type='secondary',
+                on_click=lambda: delete_and_clear(),
+            )
 
-        new_chat.button(
-            label="New",
-            key="new_chat",
-            use_container_width=True,
-            type='primary',
-            on_click=lambda: create_new_chat(),
-        )
+            new_chat.button(
+                label="New",
+                key="new_chat",
+                use_container_width=True,
+                type='primary',
+                on_click=lambda: create_new_chat(),
+            )
 
-        # show last updated in time formatted as 2021-01-01 00:00:00
-        last_updated = st.session_state.all_messages[st.session_state.chat_id]['last_updated']
-        st.caption(f"last updated: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(last_updated))}")
+            # show last updated in time formatted as 2021-01-01 00:00:00
+            last_updated = st.session_state.all_messages[st.session_state.chat_id]['last_updated']
+            st.caption(f"last updated: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(last_updated))}")
 
 
 def new_interface():
@@ -274,38 +278,6 @@ def new_interface():
         )
         # st.write(st.session_state.chat_id)
         st.session_state.current_chat_name = st.session_state.all_messages[st.session_state.chat_id]['chat_name']
-
-        search_column, pdf_column, chat_return = st.columns(3)
-        search_column.button(
-            label="Search",
-            key="search_command",
-            use_container_width=True,
-            type='secondary',
-            on_click=lambda: set_command_search(),
-        )
-        pdf_column.button(
-            label="PDF",
-            key="pdf_command",
-            use_container_width=True,
-            type='secondary',
-            on_click=lambda: set_command_pdf(),
-        )
-        chat_return.button(
-            label="Chat",
-            key="return_command",
-            use_container_width=True,
-            type='secondary',
-            on_click=lambda: set_command_none(),
-        )
-        if st.session_state.user['email'] in ['vakilzas@uww.edu', 'davidwood@byu.edu']:
-            st.button(
-                label='**Comprehensive Review**',
-                key='comprehensive_review',
-                type='primary',
-                use_container_width=True,
-                on_click=lambda: set_command_review(),
-
-            )
 
     if "messages_to_interface" not in st.session_state:
         try:
@@ -353,77 +325,80 @@ def new_interface():
 
     with st.sidebar:
         sidebar.show_sidebar()
+    chat_tab, review_tab = st.tabs(
+        ['Chat', 'Review']
+    )
+    with chat_tab:
+        left, right = st.columns(2)
 
-    if 'command' not in st.session_state:
-        st.session_state.command = None
-
-    if st.session_state.command is None:
-        chat_name()
-
-        for message in st.session_state.messages_to_interface:
-            with st.chat_message(message["role"]):
-                st.markdown(message["content"])
-
-        st.info(f"articles in context: {len(st.session_state.review_pieces)}")
-        user_input = st.chat_input("Type a message...")
-        if user_input and user_input.startswith("\\"):
-            if user_input not in ["\\search", "\\pdf", None]:
-                with st.chat_message("assistant"):
-                    st.error("I'm sorry, I don't understand that command. accepted commands are: "
-                             "\\search, \\pdf")
-            else:
-                st.session_state.command = user_input if user_input else None
-                st.rerun()
-
-        elif user_input:
-            # st.session_state.command = None
-            context = "\n\n ".join(st.session_state.messages_to_interface_context)
-            st.session_state.messages_to_interface.append({"role": "user", "content": context + "\n\n" + user_input})
-            # st.session_state.messages_to_api.append({"role": "user", "content": user_input})
-            with st.chat_message("user"):
-                with st.expander("Context"):
-                    for item in st.session_state.messages_to_interface_context:
-                        st.markdown(item)
-
-                st.markdown(user_input)
-
-            with st.chat_message("assistant"):
-                ai_response = st.empty()
-
-                msg = st.toast("AI is thinking...", icon="🧠")
-                for response_chunk in chat_response(
-                        instructions=user_input,
-                        context=st.session_state.messages_to_api_context,
-                ):
-                    msg.toast("AI is talking...", icon="🤖")
-                    ai_response.markdown(f'{response_chunk}')
-
-            st.session_state.messages_to_interface.append({"role": "assistant", "content": response_chunk})
-            st.session_state.messages_to_api.append({"role": "assistant", "content": response_chunk})
-
-            update_chat(
-                _db=st.session_state.db,
-                username=st.session_state.user['localId'],
-                chat_id=st.session_state.chat_id,
-                chat_name=st.session_state.current_chat_name,
-                last_updated=time.time(),
-                messages_ref=st.session_state.messages_ref,
-                message_content=st.session_state.messages_to_interface,
-                pinned_articles=st.session_state.pinned_articles,
-                pinned_pdfs=st.session_state.pinned_pdfs,
+        with right:
+            search_tab, pdf_tab = st.tabs(
+                ["Search", "PDF"],
             )
+            with search_tab:
+                article_search.article_search()
 
-    if st.session_state.command == "\\search":
-        # if st.session_state.messages_to_interface[-1]['content'] != "\\search" and user_input:
-        #     st.session_state.messages_to_interface.append({"role": "user", "content": user_input})
-        article_search.article_search()
+            with pdf_tab:
+                pdf_search.pdf_search()
 
-    elif st.session_state.command == "\\pdf":
-        # if st.session_state.messages_to_interface[-1]['content'] != "\\pdf" and user_input:
-        #     st.session_state.messages_to_interface.append({"role": "user", "content": user_input})
-        pdf_search.pdf_search()
+        with left:
+            chat_name()
+            sidebar.choose_model()
 
-    elif st.session_state.command == "\\review":
-        reviewer_ai.reviewer_ai()
+            st.success(f"articles in context: {len(st.session_state.review_pieces)}")
+            user_input = st.chat_input("Type a message...")
+
+            with st.container(height=500):
+                for message in st.session_state.messages_to_interface:
+                    with st.chat_message(message["role"]):
+                        st.markdown(message["content"])
+
+                if user_input:
+                    # st.session_state.command = None
+                    context = "\n\n ".join(st.session_state.messages_to_interface_context)
+                    st.session_state.messages_to_interface.append({"role": "user", "content": context + "\n\n" + user_input})
+                    # st.session_state.messages_to_api.append({"role": "user", "content": user_input})
+                    with st.chat_message("user"):
+                        with st.expander("Context"):
+                            for item in st.session_state.messages_to_interface_context:
+                                st.markdown(item)
+
+                        st.markdown(user_input)
+
+                    with st.chat_message("assistant"):
+                        ai_response = st.empty()
+
+                        msg = st.toast("AI is thinking...", icon="🧠")
+                        for response_chunk in chat_response(
+                                instructions=user_input,
+                                context=st.session_state.messages_to_api_context,
+                        ):
+                            msg.toast("AI is talking...", icon="🤖")
+                            ai_response.markdown(f'{response_chunk}')
+
+                    st.session_state.messages_to_interface.append({"role": "assistant", "content": response_chunk})
+                    st.session_state.messages_to_api.append({"role": "assistant", "content": response_chunk})
+
+                    update_chat(
+                        _db=st.session_state.db,
+                        username=st.session_state.user['localId'],
+                        chat_id=st.session_state.chat_id,
+                        chat_name=st.session_state.current_chat_name,
+                        last_updated=time.time(),
+                        messages_ref=st.session_state.messages_ref,
+                        message_content=st.session_state.messages_to_interface,
+                        pinned_articles=st.session_state.pinned_articles,
+                        pinned_pdfs=st.session_state.pinned_pdfs,
+                    )
+    with review_tab:
+        if st.session_state.user['email'] in [
+            'vakilzas@uww.edu',
+            'davidwood@byu.edu'
+        ]:
+
+            reviewer_ai.reviewer_ai()
+        else:
+            st.markdown("**Coming soon...**")
+
 
 # st.write(st.session_state)
