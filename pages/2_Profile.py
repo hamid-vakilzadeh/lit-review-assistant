@@ -8,11 +8,8 @@ ensure_session_state_vars()
 # run the css
 css_code()
 
-if __name__ == '__main__':
-    if 'user' not in st.session_state:
-        sidebar.login_and_reset_password()
+if 'user' not in st.session_state:
+    sidebar.login_and_reset_password()
 
-    else:
-        with st.sidebar:
-            sidebar.show_logout()
-        profile.profile()
+else:
+    profile.profile()
