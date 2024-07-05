@@ -2,6 +2,7 @@ from tabs import sidebar
 from utils.session_state_vars import ensure_session_state_vars
 import streamlit as st
 from tabs.css import css_code
+
 # ensure the session state variables are created
 ensure_session_state_vars()
 
@@ -28,12 +29,12 @@ def feedback_session():
             and your feedback is a vital part of this process.
             """)
 
-        st.link_button(
-            label="**Start Survey**",
-            url="https://byu.az1.qualtrics.com/jfe/form/SV_7Q9B81oKDYM9YTs",
+        st.page_link(
+            label="**:blue[Start Survey]**",
+            page="https://byu.az1.qualtrics.com/jfe/form/SV_7Q9B81oKDYM9YTs",
             use_container_width=True,
-            type="primary"
-            )
+            icon=":material/edit_document:"
+        )
 
         st.markdown(
             """
@@ -48,7 +49,7 @@ def feedback_session():
             We sincerely appreciate your time and input. Thank you for contributing to the improvement of the AI Research Assistant.
             """
         )
-        co1, hamid, david, col4 = st.columns([1,2,2,1], vertical_alignment='center', gap='large')
+        co1, hamid, david, col4 = st.columns([1, 2, 2, 1], vertical_alignment='center', gap='large')
         with hamid:
             st.image(
                 image='image/hamid-vakilzadeh.jpeg',
