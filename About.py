@@ -65,8 +65,8 @@ if __name__ == '__main__':
         with login_col:
             st.page_link(
                 st.Page("pages/1_AIRA App.py"),
-                label="**AIRA**",
-                icon=":material/support_agent:",
+                label="Login or Register",
+                icon=":material/account_box:",
                 use_container_width=True,
             )
 
