@@ -3,10 +3,13 @@ import streamlit as st
 
 def updates():
     st.header("Change log")
-    st.subheader("May 14, 2024")
+    st.subheader("July 4, 2024")
     st.markdown(
         """
-        - GPT-4o is now available for generating responses.
+        - A completely redesigned interface.
+        - Added 3 new models for generating responses (Claude 3.5 Sonnet, Gemini Flash 1.5, Llama 3)
+        - Happy 4th of July! 🎆🎇🎉
+            
         """
     )
 
@@ -17,6 +20,13 @@ def updates():
         - Enhanced article search capabilities.
         - Fixing a bug where the PDF responses are not accurate.
         - Fixing a bug where the context is not updated when the user changes the chat.
+        """
+    )
+
+    st.subheader("May 14, 2024")
+    st.markdown(
+        """
+        - GPT-4o is now available for generating responses.
         """
     )
 
