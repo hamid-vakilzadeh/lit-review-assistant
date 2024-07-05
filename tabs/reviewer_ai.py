@@ -481,7 +481,7 @@ def reviewer_ai():
             st.session_state.comprehensive_summary = get_complete_review(st.session_state.relevant_pieces_df)
             st.session_state.pop('relevant_pieces_df', None)
 
-        if 'comprehensive_summary' in st.session_state:
+        if 'comprehensive_summary'in st.session_state and 'uploaded_file' in st.session_state:
             col2.download_button(
                 label="Download Review",
                 data=mdtex2html.convert(st.session_state.comprehensive_summary),
