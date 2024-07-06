@@ -12,6 +12,8 @@ from retry import retry
 import chromadb.utils.embedding_functions as embedding_functions
 import streamlit as st
 import mdtex2html
+from tenacity import retry as tr, wait_fixed, stop_after_attempt
+from openai import APIConnectionError
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
@@ -279,42 +281,6 @@ def clean_text(input_text: str) -> str:
     )
 
 
-@retry(tries=3, delay=2)
-def check_and_return_messages_as_literal(messages: list) -> dict:
-    summary = agent(messages, json_format=True)
-    try:
-        response = literal_eval(summary.replace('My Answer:', '').replace('null', 'None'))
-        return response
-    except:
-        print(summary)
-
-
-def get_relevant_pieces(_docs):
-    responses = []
-    my_bar = st.progress(0, text=f"Starting to Reading the Paper...")
-    last_page = _docs['texts'][-1].metadata['page_number']
-    for item in tqdm(_docs['texts']):
-        percent_complete = _docs['texts'].index(item) / len(_docs['texts'])
-        messages = messages_to_send_summarizer(
-            page_content=clean_text(item.page_content),
-            part_number=item.metadata['page_number'] + item.metadata['part_number'] + 1,
-            total_parts=len(_docs['texts']),
-        )
-        try:
-            summary = check_and_return_messages_as_literal(messages)
-            if summary:
-                responses.append(summary)
-        except Exception as e:
-            print(e)
-        my_bar.progress(
-            percent_complete,
-            text=f"Reading page {item.metadata['page_number'] + 1} of {last_page + 1}"
-        )
-
-    my_bar.empty()
-    return responses
-
-
 def convert_responses_to_df(responses: list[dict]) -> pd.DataFrame:
     df = pd.DataFrame(responses)
     df.reset_index(inplace=True)
@@ -322,27 +288,35 @@ def convert_responses_to_df(responses: list[dict]) -> pd.DataFrame:
 
 
 @retry(tries=3, delay=2)
-def get_complete_review(df: pd.DataFrame) -> str:
+async def get_complete_review(df: pd.DataFrame) -> str:
     sections = ['paper_info', 'research_question', 'research_design', 'sample_selection', 'measures_definition', 'results', 'limitation']
     whole_summary = ''
-    # prepare the message for the organizer Agent
     progress_text = "Putting the review together..."
     my_bar = st.progress(0, text=progress_text)
 
-    for section in tqdm(sections):
-        percent_complete = sections.index(section) / len(sections)
+    section_messages = {}
+    for section in sections:
         section_contents = df[['index', section]]
         section_contents.dropna(inplace=True)
         section_contents.reset_index(drop=True, inplace=True)
         messages = messages_to_send_organizer(section_contents, section)
-        summary = agent(messages, json_format=False)
-        summary = summary.replace('Cleaned Notes:', '')
-        whole_summary += f"\n\n{summary}"
+        section_messages[section] = messages
 
-        my_bar.progress(
-            percent_complete,
-            text=progress_text
-        )
+    async def process_section(section):
+        result = await make_call(section_messages[section], json_format=False)
+        return section, result.replace('Cleaned Notes:', '')
+
+    tasks = [process_section(section) for section in sections]
+
+    results = []
+    for i, task in enumerate(asyncio.as_completed(tasks)):
+        section, result = await task
+        results.append((section, result))
+        my_bar.progress((i + 1) / len(sections), text="Putting the review together...")
+
+    # Sort results based on the original order of sections
+    results.sort(key=lambda x: sections.index(x[0]))
+    whole_summary = "\n\n".join([result for _, result in results]).strip()
 
     my_bar.empty()
     return whole_summary
@@ -383,21 +357,25 @@ aclient = AsyncOpenAI(
 )
 
 
-@retry(tries=5, delay=2, backoff=2, jitter=(1, 3))
+@tr(wait=wait_fixed(2), stop=stop_after_attempt(3),
+    retry=(lambda retry_state: isinstance(retry_state.outcome.exception(), APIConnectionError)))
 async def make_call(messages: list, max_tokens: int = 4096, json_format=False) -> str:
     response_type = None
     if json_format:
         response_type = {"type": "json_object"}
-
-    response = await aclient.chat.completions.create(
-        messages=messages,
-        max_tokens=max_tokens,
-        response_format=response_type,
-        model="gpt-3.5-turbo",
-        temperature=0.3,
-        seed=1234
-    )
-    return response.choices[0].message.content
+    try:
+        response = await aclient.chat.completions.create(
+            messages=messages,
+            max_tokens=max_tokens,
+            response_format=response_type,
+            model="gpt-4o",
+            temperature=0.3,
+            seed=1234
+        )
+        return response.choices[0].message.content
+    except APIConnectionError as e:
+        print(f"Connection error: {e}")
+        raise
 
 
 def return_messages_as_literal(pieces: list[str]) -> list:
@@ -435,9 +413,10 @@ async def main(_docs):
 
         my_bar.progress(
             percent_complete,
-            text=f"Reading {percent_complete * 100:.2f}% completed."
+            text=f"**{percent_complete * 100:.0f}%**"
         )
 
+    my_bar.empty()
     return responses
 
 
@@ -476,12 +455,11 @@ def reviewer_ai():
             )
             st.session_state.pop('relevant_pieces_list', None)
 
-
             # put together the summary:
-            st.session_state.comprehensive_summary = get_complete_review(st.session_state.relevant_pieces_df)
+            st.session_state.comprehensive_summary = asyncio.run(get_complete_review(st.session_state.relevant_pieces_df))
             st.session_state.pop('relevant_pieces_df', None)
 
-        if 'comprehensive_summary'in st.session_state and 'uploaded_file' in st.session_state:
+        if 'comprehensive_summary' in st.session_state and 'uploaded_file' in st.session_state:
             col2.download_button(
                 label="Download Review",
                 data=mdtex2html.convert(st.session_state.comprehensive_summary),
