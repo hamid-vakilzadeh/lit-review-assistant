@@ -6,7 +6,6 @@ from cleantext.clean import clean
 from pypdf import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
 from ast import literal_eval
-from tqdm import tqdm
 import pandas as pd
 from retry import retry
 import chromadb.utils.embedding_functions as embedding_functions
@@ -14,6 +13,8 @@ import streamlit as st
 import mdtex2html
 from tenacity import retry as tr, wait_fixed, stop_after_attempt
 from openai import APIConnectionError
+
+from utils.firestore_db import get_user_messages_ref
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
@@ -290,7 +291,6 @@ def convert_responses_to_df(responses: list[dict]) -> pd.DataFrame:
 @retry(tries=3, delay=2)
 async def get_complete_review(df: pd.DataFrame) -> str:
     sections = ['paper_info', 'research_question', 'research_design', 'sample_selection', 'measures_definition', 'results', 'limitation']
-    whole_summary = ''
     progress_text = "Putting the review together..."
     my_bar = st.progress(0, text=progress_text)
 
@@ -421,6 +421,11 @@ async def main(_docs):
 
 
 def reviewer_ai():
+    if "reviews_ref" not in st.session_state:
+        st.session_state.messages_ref = get_user_messages_ref(
+            st.session_state.db, st.session_state.user['localId'],
+            collection_name="reviews"
+        )
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.subheader('Reviewer AI')
