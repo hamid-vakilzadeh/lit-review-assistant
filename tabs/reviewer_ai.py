@@ -422,7 +422,7 @@ async def main(_docs):
 
 def reviewer_ai():
     if "reviews_ref" not in st.session_state:
-        st.session_state.messages_ref = get_user_messages_ref(
+        st.session_state.reviews_ref = get_user_messages_ref(
             st.session_state.db, st.session_state.user['localId'],
             collection_name="reviews"
         )
