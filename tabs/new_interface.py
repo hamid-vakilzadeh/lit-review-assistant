@@ -254,7 +254,8 @@ def new_interface():
     # st.write(st.session_state)
     if "messages_ref" not in st.session_state:
         st.session_state.messages_ref = get_user_messages_ref(
-            st.session_state.db, st.session_state.user['localId']
+            st.session_state.db, st.session_state.user['localId'],
+            collection_name="messages"
         )
     if 'all_messages' not in st.session_state:
         st.session_state.all_messages = get_all_messages(st.session_state.messages_ref)
