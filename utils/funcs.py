@@ -124,7 +124,6 @@ def add_to_lit_review(article):
     if interface_context not in st.session_state.messages_to_interface_context:
         st.session_state.messages_to_interface_context.append(interface_context)
         st.session_state.messages_to_api_context.append(info)
-    st.toast(f"**Added to 📚 literature review!**", icon="✅")
 
 
 # remove from notes
