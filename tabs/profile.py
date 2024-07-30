@@ -4,8 +4,7 @@ from time import time
 
 
 def profile():
-    col1, col2, col3 = st.columns([1, 2, 1])
-    update_profile, change_password = col2.tabs(["Update Profile", "Change Password"])
+    update_profile, change_password = st.tabs(["Update Profile", "Change Password"])
 
     with update_profile:
         with st.form(key='Update Profile'):
