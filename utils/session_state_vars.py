@@ -24,12 +24,6 @@ def get_venues():
             return df[df['type'] == 'journal']['name'].tolist()
 
 
-@st.cache_data(show_spinner=False)
-def get_venues():
-    data = pd.read_json('public/venues.json', lines=True)
-    return data[data['type'] == 'journal']['name'].tolist()
-
-
 def ensure_session_state_vars():
     # add a session state to store the article search results
     if 'article_search_results' not in st.session_state:
