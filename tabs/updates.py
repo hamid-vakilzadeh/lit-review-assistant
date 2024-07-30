@@ -3,26 +3,32 @@ import streamlit as st
 
 def updates():
     st.header("Change log")
+    st.subheader("July 30, 2024")
+    st.markdown(
+        """
+        - A completely redesigned interface for easier navigation. 
+        - AIRA now integrates with SemanticScholar. You can now search more 220 million papers.
+        - The new search offers advanced search capabilities, including comprehensive results and detailed filtering. 
+        """
+    )
+    st.header("In the works")
+    st.markdown(
+        """
+        - In the near future users will be able to discover related 
+        papers, access full texts, and explore author profiles to enhance their academic research. Stay Tuned.
+        """
+    )
+
+    st.markdown("---")
     st.subheader("July 4, 2024")
     st.markdown(
         """
         - A completely redesigned interface.
         - Added 3 new models for generating responses (Claude 3.5 Sonnet, Gemini Flash 1.5, Llama 3)
         - Happy 4th of July! 🎆🎇🎉
-            
+
         """
     )
-
-    st.header("In the works")
-    st.markdown(
-        """
-        - Larger Dataset of articles.
-        - Enhanced article search capabilities.
-        - Fixing a bug where the PDF responses are not accurate.
-        - Fixing a bug where the context is not updated when the user changes the chat.
-        """
-    )
-
     st.subheader("May 14, 2024")
     st.markdown(
         """
