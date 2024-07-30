@@ -1,3 +1,4 @@
+import pandas as pd
 import streamlit as st
 import json
 import pyrebase
@@ -103,3 +104,60 @@ def ensure_session_state_vars():
     if 'change_name' not in st.session_state:
         st.session_state.change_name = False
 
+    if 'show_search_dialog' not in st.session_state:
+        st.session_state.show_search_dialog = False
+
+    if 'pinned_articles_ss' not in st.session_state:
+        st.session_state.pinned_articles_ss = pd.DataFrame()
+
+    if 'lit_review_pd' not in st.session_state:
+        st.session_state.lit_review_pd = pd.DataFrame()
+
+
+def column_order():
+    return [
+        'Source',
+        'title',
+        'authorNames',
+        'venue',
+        'year',
+        'citationCount',
+        's2FieldsOfStudyUnique',
+        'abstract',
+    ]
+
+
+def column_config():
+    return {
+                'Source': st.column_config.LinkColumn(
+                    label="Source",
+                    display_text="open",
+                ),
+                'title': st.column_config.TextColumn(
+                    label="Title",
+                    disabled=True,
+                ),
+                'authorNames': st.column_config.ListColumn(
+                    label="Authors",
+                ),
+                'venue': st.column_config.TextColumn(
+                    label="Journal",
+                    disabled=True,
+                ),
+                'year': st.column_config.TextColumn(
+                    label="Year",
+                    disabled=True,
+                ),
+                'citationCount': st.column_config.TextColumn(
+                    label="Citation Count",
+                    disabled=True,
+                ),
+                's2FieldsOfStudyUnique': st.column_config.ListColumn(
+                    label="Fields of Study",
+                ),
+                'abstract': st.column_config.TextColumn(
+                    label="Abstract",
+                    disabled=True,
+                ),
+
+            }
