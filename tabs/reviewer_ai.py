@@ -426,48 +426,46 @@ def reviewer_ai():
             st.session_state.db, st.session_state.user['localId'],
             collection_name="reviews"
         )
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        st.subheader('Reviewer AI')
-        # st.session_state.pop('relevant_pieces_list', None)
-        with st.form(
-                key='form'
-        ):
-            st.write('Upload a PDF file to get a comprehensive review of the paper')
-            st.file_uploader(
-                label="Upload a file",
-                type=['pdf'],
-                accept_multiple_files=False,
-                key='uploaded_file',
-            )
-            submitted = st.form_submit_button(
-                label='Submit',
-                on_click=lambda: st.session_state.pop('comprehensive_summary', None)
-            )
-        if submitted:
-            # Load the PDF file
-            st.session_state.text = get_pdf_text(st.session_state.uploaded_file)
+    st.subheader('Reviewer AI')
+    # st.session_state.pop('relevant_pieces_list', None)
+    with st.form(
+            key='form'
+    ):
+        st.write('Upload a PDF file to get a comprehensive review of the paper')
+        st.file_uploader(
+            label="Upload a file",
+            type=['pdf'],
+            accept_multiple_files=False,
+            key='uploaded_file',
+        )
+        submitted = st.form_submit_button(
+            label='Submit',
+            on_click=lambda: st.session_state.pop('comprehensive_summary', None)
+        )
+    if submitted:
+        # Load the PDF file
+        st.session_state.text = get_pdf_text(st.session_state.uploaded_file)
 
-            # get the relevant pieces
+        # get the relevant pieces
 
-            st.session_state.relevant_pieces_list = asyncio.run(main(st.session_state.text))
+        st.session_state.relevant_pieces_list = asyncio.run(main(st.session_state.text))
 
-            st.session_state.pop('text', None)
+        st.session_state.pop('text', None)
 
-            # convert the responses to a dataframe
-            st.session_state.relevant_pieces_df = convert_responses_to_df(
-                return_messages_as_literal(st.session_state.relevant_pieces_list)
-            )
-            st.session_state.pop('relevant_pieces_list', None)
+        # convert the responses to a dataframe
+        st.session_state.relevant_pieces_df = convert_responses_to_df(
+            return_messages_as_literal(st.session_state.relevant_pieces_list)
+        )
+        st.session_state.pop('relevant_pieces_list', None)
 
-            # put together the summary:
-            st.session_state.comprehensive_summary = asyncio.run(get_complete_review(st.session_state.relevant_pieces_df))
-            st.session_state.pop('relevant_pieces_df', None)
+        # put together the summary:
+        st.session_state.comprehensive_summary = asyncio.run(get_complete_review(st.session_state.relevant_pieces_df))
+        st.session_state.pop('relevant_pieces_df', None)
 
-        if 'comprehensive_summary' in st.session_state and 'uploaded_file' in st.session_state:
-            col2.download_button(
-                label="Download Review",
-                data=mdtex2html.convert(st.session_state.comprehensive_summary),
-                file_name=f'review_{st.session_state.uploaded_file.name.replace(".pdf", "")}.html',
-                mime='text/markdown',
-            )
+    if 'comprehensive_summary' in st.session_state and 'uploaded_file' in st.session_state:
+        st.download_button(
+            label="Download Review",
+            data=mdtex2html.convert(st.session_state.comprehensive_summary),
+            file_name=f'review_{st.session_state.uploaded_file.name.replace(".pdf", "")}.html',
+            mime='text/markdown',
+        )
