@@ -413,12 +413,6 @@ def get_external_url(x):
         return None
 
 
-@st.cache_data(show_spinner=False)
-def get_venues():
-    data = pd.read_json('database/venues.json', lines=True)
-    return data[data['type'] == 'journal']['name'].tolist()
-
-
 def bulk_search():
     with st.form(key="advanced_search"):
         st.subheader("Advanced Search")
@@ -443,7 +437,7 @@ def bulk_search():
 
         journals = journal_col.multiselect(
             label="Journals",
-            options=get_venues(),
+            options=st.session_state.venues,
             key='journals',
             disabled=False
         )
