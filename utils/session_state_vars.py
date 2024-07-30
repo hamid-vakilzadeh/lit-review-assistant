@@ -8,6 +8,12 @@ from utils.firestore_db import create_new_profile, add_user_to_db
 from time import time
 
 
+@st.cache_data(show_spinner=False)
+def get_venues():
+    data = pd.read_json('public/venues.json', lines=True)
+    return data[data['type'] == 'journal']['name'].tolist()
+
+
 def ensure_session_state_vars():
     # add a session state to store the article search results
     if 'article_search_results' not in st.session_state:
@@ -112,6 +118,8 @@ def ensure_session_state_vars():
 
     if 'lit_review_pd' not in st.session_state:
         st.session_state.lit_review_pd = pd.DataFrame()
+    if 'venues' not in st.session_state:
+        st.session_state.venues = get_venues()
 
 
 def column_order():
