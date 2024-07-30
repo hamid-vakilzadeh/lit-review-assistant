@@ -6,6 +6,22 @@ from google.oauth2 import service_account
 from google.cloud import firestore
 from utils.firestore_db import create_new_profile, add_user_to_db
 from time import time
+import zipfile
+import json
+
+
+@st.cache_data(show_spinner=False)
+def get_venues():
+    zip_file_path = 'public/venues.json.zip'
+    # Open the ZIP file
+    with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+        # Get the name of the only file in the ZIP archive
+        file_name = zip_ref.namelist()[0]
+
+        # Read the JSON file into a DataFrame
+        with zip_ref.open(file_name) as json_file:
+            df = pd.read_json(json_file, lines=True)
+            return df[df['type'] == 'journal']['name'].tolist()
 
 
 @st.cache_data(show_spinner=False)
