@@ -3,7 +3,7 @@ import streamlit as st
 from utils.funcs import review_action_buttons, add_to_lit_review
 from time import time
 from utils.firestore_db import new_user_request
-from utils.session_state_vars import column_config, column_order
+from utils.session_state_vars import bulk_search_column_config, bulk_search_column_order
 from utils.session_state_vars import ensure_session_state_vars
 
 ensure_session_state_vars()
@@ -156,8 +156,8 @@ def show_sidebar():
                 )
                 selected_for_review = st.dataframe(
                     st.session_state.pinned_articles_ss,
-                    column_config=column_config(),
-                    column_order=column_order(),
+                    column_config=bulk_search_column_config(),
+                    column_order=bulk_search_column_order(),
                     hide_index=True,
                     on_select='rerun',
                     selection_mode='multi-row'
@@ -176,10 +176,9 @@ def show_sidebar():
                 dataframe = st.session_state.pinned_articles_ss.copy()
                 dataframe.rename(columns={
                     'abstract': 'text',
-                    'citationCount': 'cite_counts',
-                    'authorNames': 'authors',
-                    'venue': 'journal',
-                    "Source": "doi",
+                    'citations': 'cite_counts',
+                    'authors': 'authors',
+                    "source": "doi",
 
                 }, inplace=True)
 

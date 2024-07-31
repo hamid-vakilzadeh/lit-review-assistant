@@ -2,14 +2,11 @@ import streamlit as st
 from utils.ai import ai_completion
 from utils.funcs import (
     set_command_none,
-    set_command_search,
-    set_command_pdf,
-    set_command_review,
     pin_piece
 )
 from utils.session_state_vars import ensure_session_state_vars
 import json
-from tabs import article_search, pdf_search, sidebar, reviewer_ai
+from tabs import sidebar
 import time
 from tabs.css import css_code
 

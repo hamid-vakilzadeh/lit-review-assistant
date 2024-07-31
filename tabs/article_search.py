@@ -9,7 +9,7 @@ import json
 import requests
 import pandas as pd
 from datetime import datetime
-from utils.session_state_vars import column_order, column_config
+from utils.session_state_vars import bulk_search_column_order, bulk_search_column_config
 from tabs.css import css_code
 
 
@@ -499,7 +499,17 @@ def bulk_search():
                 lambda x: [d['name'] for d in x])
             data_to_show = data_to_show.drop(columns=['s2FieldsOfStudy', 'authors'])
             data_to_show.set_index('paperId', inplace=True)
-            data_to_show['Source'] = data_to_show['externalIds'].apply(get_external_url)
+            data_to_show['source'] = data_to_show['externalIds'].apply(get_external_url)
+            # rename columns
+            data_to_show.rename(
+                columns={
+                    'authorNames': 'authors',
+                    'venue': 'journal',
+                    'citationCount': 'citations',
+                    's2FieldsOfStudyUnique': 'topics',
+                },
+                inplace=True
+            )
             st.session_state.data_to_show = data_to_show.copy()
             st.session_state.pop('bulk_search_response', None)
 
@@ -514,8 +524,8 @@ def bulk_search():
             hide_index=True,
             data=st.session_state.data_to_show,
 
-            column_order=column_order(),
-            column_config=column_config(),
+            column_order=bulk_search_column_order(),
+            column_config=bulk_search_column_config(),
             selection_mode="multi-row",
             on_select='rerun',
             use_container_width=True,

@@ -21,7 +21,9 @@ def get_venues():
         # Read the JSON file into a DataFrame
         with zip_ref.open(file_name) as json_file:
             df = pd.read_json(json_file, lines=True)
-            return df[df['type'] == 'journal']['name'].tolist()
+            journals = df[df['type'] == 'journal']['name'].tolist()
+            journals.sort()
+            return journals
 
 
 def ensure_session_state_vars():
@@ -132,22 +134,22 @@ def ensure_session_state_vars():
         st.session_state.venues = get_venues()
 
 
-def column_order():
+def bulk_search_column_order():
     return [
-        'Source',
+        'source',
         'title',
-        'authorNames',
-        'venue',
+        'authors',
+        'journal',
         'year',
-        'citationCount',
-        's2FieldsOfStudyUnique',
+        'citations',
+        'topics',
         'abstract',
     ]
 
 
-def column_config():
+def bulk_search_column_config():
     return {
-                'Source': st.column_config.LinkColumn(
+                'source': st.column_config.LinkColumn(
                     label="Source",
                     display_text="open",
                 ),
@@ -155,10 +157,10 @@ def column_config():
                     label="Title",
                     disabled=True,
                 ),
-                'authorNames': st.column_config.ListColumn(
+                'authors': st.column_config.ListColumn(
                     label="Authors",
                 ),
-                'venue': st.column_config.TextColumn(
+                'journal': st.column_config.TextColumn(
                     label="Journal",
                     disabled=True,
                 ),
@@ -166,12 +168,12 @@ def column_config():
                     label="Year",
                     disabled=True,
                 ),
-                'citationCount': st.column_config.TextColumn(
-                    label="Citation Count",
+                'citations': st.column_config.TextColumn(
+                    label="Citations",
                     disabled=True,
                 ),
-                's2FieldsOfStudyUnique': st.column_config.ListColumn(
-                    label="Fields of Study",
+                'topics': st.column_config.ListColumn(
+                    label="Topics",
                 ),
                 'abstract': st.column_config.TextColumn(
                     label="Abstract",
