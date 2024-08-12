@@ -2,8 +2,8 @@ import streamlit as st
 from utils.firestore_db import update_profile_db, update_password
 from time import time
 
-def profile():
 
+def profile():
     update_profile, change_password = st.tabs(["Update Profile", "Change Password"])
 
     with update_profile:

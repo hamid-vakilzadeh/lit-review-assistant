@@ -1,3 +1,4 @@
+import pandas as pd
 import streamlit as st
 import json
 import pyrebase
@@ -5,6 +6,24 @@ from google.oauth2 import service_account
 from google.cloud import firestore
 from utils.firestore_db import create_new_profile, add_user_to_db
 from time import time
+import zipfile
+import json
+
+
+@st.cache_data(show_spinner=False)
+def get_venues():
+    zip_file_path = 'public/venues.json.zip'
+    # Open the ZIP file
+    with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+        # Get the name of the only file in the ZIP archive
+        file_name = zip_ref.namelist()[0]
+
+        # Read the JSON file into a DataFrame
+        with zip_ref.open(file_name) as json_file:
+            df = pd.read_json(json_file, lines=True)
+            journals = df[df['type'] == 'journal']['name'].tolist()
+            journals.sort()
+            return journals
 
 
 def ensure_session_state_vars():
@@ -103,3 +122,62 @@ def ensure_session_state_vars():
     if 'change_name' not in st.session_state:
         st.session_state.change_name = False
 
+    if 'show_search_dialog' not in st.session_state:
+        st.session_state.show_search_dialog = False
+
+    if 'pinned_articles_ss' not in st.session_state:
+        st.session_state.pinned_articles_ss = pd.DataFrame()
+
+    if 'lit_review_pd' not in st.session_state:
+        st.session_state.lit_review_pd = pd.DataFrame()
+    if 'venues' not in st.session_state:
+        st.session_state.venues = get_venues()
+
+
+def bulk_search_column_order():
+    return [
+        'source',
+        'title',
+        'authors',
+        'journal',
+        'year',
+        'citations',
+        'topics',
+        'abstract',
+    ]
+
+
+def bulk_search_column_config():
+    return {
+                'source': st.column_config.LinkColumn(
+                    label="Source",
+                    display_text="open",
+                ),
+                'title': st.column_config.TextColumn(
+                    label="Title",
+                    disabled=True,
+                ),
+                'authors': st.column_config.ListColumn(
+                    label="Authors",
+                ),
+                'journal': st.column_config.TextColumn(
+                    label="Journal",
+                    disabled=True,
+                ),
+                'year': st.column_config.TextColumn(
+                    label="Year",
+                    disabled=True,
+                ),
+                'citations': st.column_config.TextColumn(
+                    label="Citations",
+                    disabled=True,
+                ),
+                'topics': st.column_config.ListColumn(
+                    label="Topics",
+                ),
+                'abstract': st.column_config.TextColumn(
+                    label="Abstract",
+                    disabled=True,
+                ),
+
+            }

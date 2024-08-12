@@ -25,9 +25,9 @@ def create_new_profile(_db, username):
         st.session_state.profile_details = user_ref.get().to_dict()
 
 
-def get_user_messages_ref(_db, username):
+def get_user_messages_ref(_db, username, collection_name):
     user_ref = _db.collection("users").document(username)
-    messages_ref = user_ref.collection('messages')
+    messages_ref = user_ref.collection(collection_name)
     return messages_ref
 
 
@@ -42,6 +42,17 @@ def get_all_messages(_messages_ref):
             update_chat_db(_messages_ref, doc_id, chat['chat_name'], chat['last_updated'])
         all_messages[doc_id] = {'chat_name': chat['chat_name'], 'last_updated': chat['last_updated']}
     sorted_history = {k: v for k, v in sorted(all_messages.items(), key=lambda item: item[1]['last_updated'], reverse=True)}
+
+    return sorted_history
+
+
+def get_all_reviews(_messages_ref):
+    all_reviews = {}
+    for doc in _messages_ref.stream():
+        doc_id = doc.id
+        review = doc.to_dict()
+        all_reviews[doc_id] = {'chat_name': review['review_name'], 'last_updated': review['last_updated']}
+    sorted_history = {k: v for k, v in sorted(all_reviews.items(), key=lambda item: item[1]['last_updated'], reverse=True)}
 
     return sorted_history
 

@@ -1,23 +1,14 @@
 import streamlit as st
-from tabs import sidebar, article_search, pdf_search, literature_review, updates
+from tabs import sidebar, updates
 from utils.session_state_vars import ensure_session_state_vars
+from tabs.css import css_code
+from tabs.dialogs import search_dialog, advanced_search_dialog, pdf_dialog, reviewer_dialog, temporary_dialog
 
 # ensure the session state variables are created
 ensure_session_state_vars()
 
-if __name__ == '__main__':
-    # make page wide
-    st.set_page_config(
-        layout="centered",
-        page_title="AI Research Assistant",
-        page_icon="📚",
-    )
 
-    #if 'user' not in st.session_state:
-        #sidebar.login_and_reset_password()
-
-    # else:
-
+def about():
     # display the header and general settings
     with st.container():
         # The header
@@ -29,32 +20,115 @@ if __name__ == '__main__':
             This app is designed to assist researchers in finding and organizing literature.
             """
         )
-    with st.sidebar:
-        if 'user' in st.session_state:
-            sidebar.show_logout()
 
     # display the instructions
     with st.container():
         st.video(
-            data="https://www.youtube.com/watch?v=-93awViey4o"
+            data="https://www.youtube.com/watch?v=-93awViey4o",
+            autoplay=False
         )
-    # sidebar.show_sidebar()
 
-    # article_search_tab, pdf_tab, literature_review_tab = st.tabs(
-    #    ["**Articles**", "**My PDFs**", "**Literature Review**"]
-    # )
-
-    # display the Articles Search tab
-    # with article_search_tab:
-    #    article_search.article_search()
-
-    # display the PDF Search (My PDFs) tab
-    # with pdf_tab:
-    #    pdf_search.pdf_search()
-
-    # display the Literature Review tab
-    # with literature_review_tab:
-    #    literature_review.literature_review()
-
-    with st.container():
+    with st.container(height=500):
         updates.updates()
+
+
+my_pages = [
+    st.Page(about, title='Home', default=True, url_path='About.py'),
+    st.Page("the_pages/1_AIRA App.py", title='AIRA Application'),
+    st.Page("the_pages/2_Profile.py", title="Your Account"),
+    st.Page("the_pages/3_Feedback.py", title="Feedback"),
+    st.Page("the_pages/4_logout.py"),
+
+]
+
+if __name__ == '__main__':
+
+    # make page wide
+    st.set_page_config(
+        layout="centered",
+        page_title="AI Research Assistant",
+        page_icon="📚",
+    )
+    # run the css
+    css_code()
+
+    if 'user' not in st.session_state:
+        main_menu_col, research_tools_col, other_chats_col = st.columns(3)
+
+        with main_menu_col.popover("Main Menu", use_container_width=True):
+            st.page_link(
+                st.Page("About.py"),
+                label="Home",
+                icon=":material/home:",
+                use_container_width=True,
+            )
+
+            st.page_link(
+                st.Page("the_pages/1_AIRA App.py"),
+                label="Login or Register",
+                icon=":material/account_box:",
+                use_container_width=True,
+            )
+
+        pg = st.navigation(my_pages,
+                           position='hidden'
+                           )
+
+        pg.run()
+
+    else:
+        main_menu_col, research_tools_col, other_chats_col = st.columns(3)
+        with main_menu_col.popover("Main Menu", use_container_width=True):
+            st.page_link(
+                st.Page("About.py"),
+                label="Home",
+                icon=":material/home:",
+                use_container_width=True,
+            )
+
+            st.page_link(
+                st.Page("the_pages/1_AIRA App.py"),
+                label="**AIRA**",
+                icon=":material/support_agent:",
+                use_container_width=True,
+            )
+
+            st.page_link(
+                st.Page("the_pages/3_Feedback.py"),
+                label="Feedback",
+                icon=":material/feedback:",
+                use_container_width=True,
+            )
+
+            st.page_link(
+                st.Page("the_pages/2_Profile.py"),
+                label="Your Account",
+                icon=":material/account_box:",
+                use_container_width=True,
+            )
+
+            st.page_link(
+                st.Page("the_pages/4_logout.py"),
+                label="Logout",
+                icon=":material/logout:",
+                use_container_width=True,
+            )
+
+        pg = st.navigation(my_pages,
+                           position='hidden'
+                           )
+        if pg.url_path == 'AIRA_App':
+            with research_tools_col.popover("Research Tools", use_container_width=True):
+
+                # if st.button("Search", use_container_width=True):
+                #     search_dialog()
+                if st.button("Advanced Search", use_container_width=True):
+                    advanced_search_dialog()
+
+                if st.button("PDF", use_container_width=True):
+                    temporary_dialog()
+
+                if st.button("AIRA Plus", use_container_width=True):
+                    reviewer_dialog()
+
+        pg.run()

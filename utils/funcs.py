@@ -66,6 +66,11 @@ def set_command_pdf():
     clean_and_close_search()
 
 
+def set_command_review():
+    st.session_state.command = "\\review"
+    clean_and_close_search()
+
+
 def review_action_buttons(article, state_var):
     # create 2 columns for the buttons
     col1, col2 = st.columns(2)
@@ -119,7 +124,6 @@ def add_to_lit_review(article):
     if interface_context not in st.session_state.messages_to_interface_context:
         st.session_state.messages_to_interface_context.append(interface_context)
         st.session_state.messages_to_api_context.append(info)
-    st.toast(f"**Added to 📚 literature review!**", icon="✅")
 
 
 # remove from notes

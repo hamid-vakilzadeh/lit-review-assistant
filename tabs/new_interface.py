@@ -1,9 +1,14 @@
 import streamlit as st
 from utils.ai import ai_completion
-from utils.funcs import set_command_none, set_command_search, set_command_pdf, pin_piece
+from utils.funcs import (
+    set_command_none,
+    pin_piece
+)
+from utils.session_state_vars import ensure_session_state_vars
 import json
-from tabs import article_search, pdf_search, sidebar
+from tabs import sidebar
 import time
+from tabs.css import css_code
 
 from utils.firestore_db import (
     get_user_messages_ref,
@@ -14,6 +19,9 @@ from utils.firestore_db import (
     add_new_message,
     update_chat_db
 )
+
+css_code()
+ensure_session_state_vars()
 
 
 def change_chat():
@@ -190,23 +198,23 @@ def create_new_chat():
 def chat_name():
     if st.session_state.change_name:
         with st.form(key='change_chat_name'):
-            name, change_button = st.columns([4, 1])
-            name.text_input(
+            st.text_input(
                 label="Chat Name",
                 placeholder="Chat Name",
                 key="new_chat_name",
                 value=st.session_state.current_chat_name,
                 label_visibility="collapsed",
             )
-            change_button.form_submit_button(
+            st.form_submit_button(
                 label="Save",
                 use_container_width=True,
                 type='primary',
                 on_click=lambda: update_chat_name(),
             )
     else:
-        name, edit_button, clear_chat_btn, delete_chat, new_chat = st.columns([3, 1, 1, 1, 1])
-        name.subheader(st.session_state.current_chat_name)
+
+        st.subheader(st.session_state.current_chat_name)
+        edit_button, clear_chat_btn, delete_chat, new_chat = st.columns([1, 1, 1, 1])
         # change chat name
         edit_button.button(
             label="Edit",
@@ -250,7 +258,8 @@ def new_interface():
     # st.write(st.session_state)
     if "messages_ref" not in st.session_state:
         st.session_state.messages_ref = get_user_messages_ref(
-            st.session_state.db, st.session_state.user['localId']
+            st.session_state.db, st.session_state.user['localId'],
+            collection_name="messages"
         )
     if 'all_messages' not in st.session_state:
         st.session_state.all_messages = get_all_messages(st.session_state.messages_ref)
@@ -262,41 +271,16 @@ def new_interface():
         )
         st.session_state.all_messages = get_all_messages(st.session_state.messages_ref)
 
-    with st.sidebar:
-        st.selectbox(
-            label="Chat History",
-            key="chat_id",
-            index=0,
-            placeholder="Open a Chat",
-            options=st.session_state.all_messages.keys(),
-            format_func=lambda x: st.session_state.all_messages[x]['chat_name'],
-            on_change=lambda: change_chat(),
-        )
-        # st.write(st.session_state.chat_id)
-        st.session_state.current_chat_name = st.session_state.all_messages[st.session_state.chat_id]['chat_name']
-
-        search_column, pdf_column, chat_return = st.columns(3)
-        search_column.button(
-            label="Search",
-            key="search_command",
-            use_container_width=True,
-            type='secondary',
-            on_click=lambda: set_command_search(),
-        )
-        pdf_column.button(
-            label="PDF",
-            key="pdf_command",
-            use_container_width=True,
-            type='secondary',
-            on_click=lambda: set_command_pdf(),
-        )
-        chat_return.button(
-            label="Chat",
-            key="return_command",
-            use_container_width=True,
-            type='secondary',
-            on_click=lambda: set_command_none(),
-        )
+    st.selectbox(
+        label="Chat History",
+        key="chat_id",
+        index=0,
+        placeholder="Open a Chat",
+        options=st.session_state.all_messages.keys(),
+        format_func=lambda x: st.session_state.all_messages[x]['chat_name'],
+        on_change=lambda: change_chat(),
+    )
+    st.session_state.current_chat_name = st.session_state.all_messages[st.session_state.chat_id]['chat_name']
 
     if "messages_to_interface" not in st.session_state:
         try:
@@ -336,37 +320,28 @@ def new_interface():
                     "content": "I am a research assistant here to help with literature review. "
                                "I can help you find articles, summarize them, and generate a literature review. "
                                "I can also help you with your PDFs. "
-                               "You can find articles using the :green[**\\search**] command. "
-                               "You can also dig into your PDFs by using the :green[**\\pdf**] command."
-                               "Start with **\\search** or **\\pdf** to begin. \n\n Alternatively, you can "
-                               "click on the buttons on the left to start."},
+                               },
             ]
 
-    with st.sidebar:
-        sidebar.show_sidebar()
 
-    if 'command' not in st.session_state:
-        st.session_state.command = None
+    chat_name()
 
-    if st.session_state.command is None:
-        chat_name()
+    sidebar.show_sidebar()
+    sidebar.choose_model()
+    if len(st.session_state.review_pieces) == 0:
+        st.info("Add articles to your literature review by selecting them in the context.")
+    else:
+        st.success(f"Articles in context: {len(st.session_state.review_pieces)}")
 
+    chat_box = st.container(height=500)
+    with chat_box:
         for message in st.session_state.messages_to_interface:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
+    user_input = st.chat_input("Type a message...")
 
-        st.info(f"articles in context: {len(st.session_state.review_pieces)}")
-        user_input = st.chat_input("Type a message...")
-        if user_input and user_input.startswith("\\"):
-            if user_input not in ["\\search", "\\pdf", None]:
-                with st.chat_message("assistant"):
-                    st.error("I'm sorry, I don't understand that command. accepted commands are: "
-                             "\\search, \\pdf")
-            else:
-                st.session_state.command = user_input if user_input else None
-                st.rerun()
-
-        elif user_input:
+    if user_input:
+        with chat_box:
             # st.session_state.command = None
             context = "\n\n ".join(st.session_state.messages_to_interface_context)
             st.session_state.messages_to_interface.append({"role": "user", "content": context + "\n\n" + user_input})
@@ -389,29 +364,20 @@ def new_interface():
                     msg.toast("AI is talking...", icon="🤖")
                     ai_response.markdown(f'{response_chunk}')
 
-            st.session_state.messages_to_interface.append({"role": "assistant", "content": response_chunk})
-            st.session_state.messages_to_api.append({"role": "assistant", "content": response_chunk})
+        st.session_state.messages_to_interface.append({"role": "assistant", "content": response_chunk})
+        st.session_state.messages_to_api.append({"role": "assistant", "content": response_chunk})
 
-            update_chat(
-                _db=st.session_state.db,
-                username=st.session_state.user['localId'],
-                chat_id=st.session_state.chat_id,
-                chat_name=st.session_state.current_chat_name,
-                last_updated=time.time(),
-                messages_ref=st.session_state.messages_ref,
-                message_content=st.session_state.messages_to_interface,
-                pinned_articles=st.session_state.pinned_articles,
-                pinned_pdfs=st.session_state.pinned_pdfs,
-            )
+        update_chat(
+            _db=st.session_state.db,
+            username=st.session_state.user['localId'],
+            chat_id=st.session_state.chat_id,
+            chat_name=st.session_state.current_chat_name,
+            last_updated=time.time(),
+            messages_ref=st.session_state.messages_ref,
+            message_content=st.session_state.messages_to_interface,
+            pinned_articles=st.session_state.pinned_articles,
+            pinned_pdfs=st.session_state.pinned_pdfs,
+        )
 
-    if st.session_state.command == "\\search":
-        # if st.session_state.messages_to_interface[-1]['content'] != "\\search" and user_input:
-        #     st.session_state.messages_to_interface.append({"role": "user", "content": user_input})
-        article_search.article_search()
 
-    elif st.session_state.command == "\\pdf":
-        # if st.session_state.messages_to_interface[-1]['content'] != "\\pdf" and user_input:
-        #     st.session_state.messages_to_interface.append({"role": "user", "content": user_input})
-        pdf_search.pdf_search()
-
-# st.write(st.session_state.messages_to_api_context)
+    # st.write(st.session_state)
