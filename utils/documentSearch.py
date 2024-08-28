@@ -14,8 +14,8 @@ openai_ef = embedding_functions.OpenAIEmbeddingFunction(
     api_key=st.secrets["OPENAI_API_KEY"],
 )
 
-api = chromadb.PersistentClient(path="library")
-collection = api.get_collection("langchain", embedding_function=openai_ef)
+# api = chromadb.PersistentClient(path="library")
+# collection = api.get_collection("langchain", embedding_function=openai_ef)
 
 
 def found_articles_in_format(docs: dict) -> list:
@@ -35,8 +35,6 @@ def found_articles_in_format(docs: dict) -> list:
         results.append(this_doc)
 
     return results
-
-# TODO: Check the DOI for year = 0
 
 
 #@st.cache_data(show_spinner=False)
