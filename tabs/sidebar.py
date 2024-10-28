@@ -110,20 +110,15 @@ def choose_model():
         label='Model Name',
         options=[
             'OpenAI: GPT-4o',
-            'OpenAI: GPT-3.5 16K',
             'Anthropic: Claude 3.5 Sonnet',
-            'Meta: Llama 3 70B Instruct (nitro)',
             'Google: Gemini Flash 1.5',
         ],
     )
-    if chosen_model == 'OpenAI: GPT-3.5 16K':
-        st.session_state.selected_model = 'openai/gpt-3.5-turbo-16k'
+
     if chosen_model == 'OpenAI: GPT-4o':
         st.session_state.selected_model = 'openai/gpt-4o'
     if chosen_model == 'Anthropic: Claude 3.5 Sonnet':
         st.session_state.selected_model = 'anthropic/claude-3.5-sonnet'
-    if chosen_model == 'Meta: Llama 3 70B Instruct (nitro)':
-        st.session_state.selected_model = 'meta-llama/llama-3-70b-instruct:nitro'
     if chosen_model == 'Google: Gemini Flash 1.5':
         st.session_state.selected_model = 'google/gemini-flash-1.5'
 
