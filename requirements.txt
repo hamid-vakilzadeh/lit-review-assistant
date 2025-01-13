@@ -17,4 +17,4 @@ undetected_chromedriver==3.5.4
 clean-text==0.6.0
 retry
 mdtex2html
-httpx==1.0.0b0
+httpx==0.28.1
