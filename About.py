@@ -4,10 +4,6 @@ from utils.session_state_vars import ensure_session_state_vars
 from tabs.css import css_code
 from tabs.dialogs import search_dialog, advanced_search_dialog, pdf_dialog, temporary_dialog
 
-# ensure the session state variables are created
-ensure_session_state_vars()
-
-
 def about():
     # display the header and general settings
     with st.container():
@@ -48,6 +44,10 @@ if __name__ == '__main__':
     )
     # run the css
     css_code()
+
+    # ensure the session state variables are created
+    ensure_session_state_vars()
+
 
     main_menu_col, research_tools_col, other_chats_col = st.columns(3)
     
