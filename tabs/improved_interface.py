@@ -104,17 +104,10 @@ def render_research_tools():
         accept_multiple_files=True,
         help="Upload multiple PDF files to add to your research collection"
     )
-    
-    # DOI input for better citation extraction
-    doi_input = st.text_input(
-        "DOI (optional)",
-        placeholder="10.1000/example.doi",
-        help="Provide DOI for better citation extraction"
-    )
-        
+            
     if st.button("📤 Upload & Process", use_container_width=True, type="primary"):
         if uploaded_files:
-            process_multiple_pdfs(uploaded_files, doi_input)
+            process_multiple_pdfs(uploaded_files, doi_input=None)
     
     # Model Selection
     st.markdown("### ⚙️ Settings")
