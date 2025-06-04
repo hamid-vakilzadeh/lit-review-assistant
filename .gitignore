@@ -3,3 +3,12 @@
 /venv/
 /temp/
 /library/aaa/aaa-db/
+/.streamlit/secrets.toml
+/Chat History Data/
+/chroma_migrated/
+/database/
+/library/
+/lit review/
+__pycache__/
+firestore-key.json
+.DS_Store
