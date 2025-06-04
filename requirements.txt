@@ -9,8 +9,6 @@ chromadb==0.6.2
 tiktoken==0.5.2
 pypdf~=3.13.0
 pysqlite3-binary
-pyrebase4~=4.7.1
-google-cloud-firestore==2.12.0
 bs4
 lxml
 undetected_chromedriver==3.5.4

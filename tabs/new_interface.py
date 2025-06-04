@@ -10,14 +10,14 @@ from tabs import sidebar
 import time
 from tabs.css import css_code
 
-from utils.firestore_db import (
-    get_user_messages_ref,
-    delete_document,
-    get_document,
-    get_all_messages,
+from utils.local_storage import (
+    get_chat_messages_ref,
+    delete_chat,
+    get_chat,
+    get_all_chats,
     update_chat,
     add_new_message,
-    update_chat_db
+    clear_chat_messages
 )
 
 css_code()
@@ -42,30 +42,13 @@ def clear_chat():
 
 
 def clear_chat_only():
-    delete_document(
-        messages_ref=st.session_state.messages_ref,
-        message_id=st.session_state.chat_id,
-    )
-    add_new_message(
-        st.session_state.messages_ref,
-        last_updated=time.time(),
-        chat_name=st.session_state.current_chat_name,
-        message_content=[],
-        pinned_articles=st.session_state.pinned_articles,
-        pinned_pdfs=st.session_state.pinned_pdfs
-    )
+    clear_chat_messages(st.session_state.chat_id)
     clear_chat()
 
 
 def delete_and_clear():
-    delete_document(
-        messages_ref=st.session_state.messages_ref,
-        message_id=st.session_state.chat_id,
-    )
+    delete_chat(st.session_state.chat_id)
     clear_chat()
-    # user = st.session_state.user
-    # st.session_state.clear()
-    # st.session_state.user = user
     set_command_none()
 
 
@@ -178,20 +161,16 @@ def set_chat_name():
 def update_chat_name():
     st.session_state.current_chat_name = st.session_state.new_chat_name
     st.session_state.pop('change_name', None)
-    update_chat_db(
-        messages_ref=st.session_state.messages_ref,
+    update_chat(
         chat_id=st.session_state.chat_id,
         chat_name=st.session_state.current_chat_name,
-        last_updated=time.time(),
     )
-    st.session_state.all_messages = get_all_messages(st.session_state.messages_ref)
+    st.session_state.all_messages = get_all_chats()
 
 
 def create_new_chat():
-    add_new_message(
-        st.session_state.messages_ref,
-        last_updated=time.time()
-    )
+    chat_id = add_new_message(last_updated=time.time())
+    st.session_state.current_chat_id = chat_id
     clear_chat()
 
 
@@ -255,21 +234,13 @@ def chat_name():
 
 
 def new_interface():
-    # st.write(st.session_state)
-    if "messages_ref" not in st.session_state:
-        st.session_state.messages_ref = get_user_messages_ref(
-            st.session_state.db, st.session_state.user['localId'],
-            collection_name="messages"
-        )
+    # Initialize local storage and get all chats
     if 'all_messages' not in st.session_state:
-        st.session_state.all_messages = get_all_messages(st.session_state.messages_ref)
+        st.session_state.all_messages = get_all_chats()
 
     if len(st.session_state.all_messages) == 0:
-        add_new_message(
-            last_updated=time.time(),
-            messages_ref=st.session_state.messages_ref,
-        )
-        st.session_state.all_messages = get_all_messages(st.session_state.messages_ref)
+        chat_id = add_new_message(last_updated=time.time())
+        st.session_state.all_messages = get_all_chats()
 
     st.selectbox(
         label="Chat History",
@@ -284,30 +255,21 @@ def new_interface():
 
     if "messages_to_interface" not in st.session_state:
         try:
-            cloud_content = get_document(
-                st.session_state.messages_ref, st.session_state.chat_id)
-            if 'chat' in cloud_content:
-                st.session_state.messages_to_interface = cloud_content['chat']
+            chat_content = get_chat(st.session_state.chat_id)
+            if 'chat' in chat_content:
+                st.session_state.messages_to_interface = chat_content['chat']
             else:
                 st.session_state.messages_to_interface = []
-            if 'pdfs' in cloud_content:
-                # st.session_state.pinned_pdfs = cloud_content['pdfs']
-                for pdf in cloud_content['pdfs']:
-                    pin_piece(
-                        pdf, st.session_state.pinned_pdfs
-                    )
+            if 'pdfs' in chat_content:
+                for pdf in chat_content['pdfs']:
+                    pin_piece(pdf, st.session_state.pinned_pdfs)
             else:
                 st.session_state.pinned_pdfs = []
-            if 'articles' in cloud_content:
-                # st.session_state.pinned_articles = cloud_content['articles']
-                for article in cloud_content['articles']:
-                    pin_piece(
-                        article, st.session_state.pinned_articles
-                    )
+            if 'articles' in chat_content:
+                for article in chat_content['articles']:
+                    pin_piece(article, st.session_state.pinned_articles)
             else:
                 st.session_state.pinned_articles = []
-            # st.session_state.review_pieces += st.session_state.pinned_pdfs
-            # st.session_state.review_pieces += st.session_state.pinned_articles
             st.session_state.messages_to_api = st.session_state.messages_to_interface.copy()
 
         except:
@@ -368,12 +330,8 @@ def new_interface():
         st.session_state.messages_to_api.append({"role": "assistant", "content": response_chunk})
 
         update_chat(
-            _db=st.session_state.db,
-            username=st.session_state.user['localId'],
             chat_id=st.session_state.chat_id,
             chat_name=st.session_state.current_chat_name,
-            last_updated=time.time(),
-            messages_ref=st.session_state.messages_ref,
             message_content=st.session_state.messages_to_interface,
             pinned_articles=st.session_state.pinned_articles,
             pinned_pdfs=st.session_state.pinned_pdfs,
