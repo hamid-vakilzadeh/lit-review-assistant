@@ -5,8 +5,9 @@ from tabs.css import css_code
 from tabs.dialogs import search_dialog, advanced_search_dialog, pdf_dialog, temporary_dialog
 
 def about():
+    col1, col2, col3 = st.columns([1, 3, 1])
     # display the header and general settings
-    with st.container():
+    with col2:
         # The header
         st.header("AIRA: AI Research Assistant")
 
@@ -17,15 +18,32 @@ def about():
             """
         )
 
-    # display the instructions
-    with st.container():
-        st.video(
-            data="https://www.youtube.com/watch?v=-93awViey4o",
-            autoplay=False
-        )
+        st.info("""
+            **Two Years of AIRA: From RAG to MCP**
 
-    with st.container(height=500):
-        updates.updates()
+            In June 2023, we started AIRA, an experimental AI-powered research assistant using retrieval-augmented generation (RAG). 
+                   Our goal was simple: help researchers navigate and summarize extensive academic literature through easy-to-use prompts. 
+                   At that time, RAG represented cutting-edge technology that significantly simplified literature reviews.
+
+            AI technology advanced rapidly. By the time we published the AIRA paper, we had already moved ahead with MCP—a stronger, upgraded research assistant. 
+                   MCP builds on the initial AIRA idea but uses newer AI models to offer better performance, increased flexibility, and an improved researcher experience.
+
+            Explore the original AIRA research paper, and if you use it, please cite our work. Also, be sure to check out MCP to see how far we’ve advanced since our initial release.
+
+            📄 Read and cite the paper: **Vakilzadeh, H., and Wood, D. A. (2025). The Development of a RAG-Based Artificial Intelligence Research Assistant (AIRA). _Journal of Information Systems. forthcoming_.**
+
+            🚀 **Explore MCP here**: [AI - Research Assistant (MCP)](https://github.com/hamid-vakilzadeh/AIRA-SemanticScholar)
+        """)
+
+        # display the instructions
+        with st.expander("Instructions", expanded=False):
+            st.video(
+                data="https://www.youtube.com/watch?v=-93awViey4o",
+                autoplay=False
+            )
+
+        with st.expander("Change Log", expanded=True):
+            updates.updates()
 
 
 my_pages = [
@@ -49,7 +67,7 @@ if __name__ == '__main__':
     ensure_session_state_vars()
 
 
-    main_menu_col, research_tools_col, other_chats_col = st.columns(3)
+    col1, main_menu_col, research_tools_col, other_chats_col, col5 = st.columns(5)
     
     with main_menu_col.popover("Main Menu", use_container_width=True):
         st.page_link(
@@ -74,13 +92,6 @@ if __name__ == '__main__':
         )
 
     pg = st.navigation(my_pages, position='hidden')
-    
-    if pg.url_path == 'AIRA_App':
-        with research_tools_col.popover("Research Tools", use_container_width=True):
-            if st.button("Advanced Search", use_container_width=True):
-                advanced_search_dialog()
 
-            if st.button("PDF", use_container_width=True):
-                pdf_dialog()
 
     pg.run()

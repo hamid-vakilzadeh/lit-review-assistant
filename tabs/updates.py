@@ -25,15 +25,6 @@ def updates():
         - The new search offers advanced search capabilities, including comprehensive results and detailed filtering. 
         """
     )
-    st.header("In the works")
-    st.markdown(
-        """
-        - In the near future users will be able to discover related 
-        papers, access full texts, and explore author profiles to enhance their academic research. Stay Tuned.
-        """
-    )
-
-    st.markdown("---")
     st.subheader("July 4, 2024")
     st.markdown(
         """
