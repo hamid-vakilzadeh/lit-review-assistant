@@ -106,7 +106,7 @@ def update_filter():
     pass
 
 
-@st.experimental_fragment
+@st.fragment
 def article_search():
     css_code()
     st.subheader("Article Search")
