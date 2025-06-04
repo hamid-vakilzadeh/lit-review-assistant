@@ -1,8 +1,7 @@
 import streamlit as st
-from tabs import sidebar, updates
+from tabs import updates
 from utils.session_state_vars import ensure_session_state_vars
 from tabs.css import css_code
-from tabs.dialogs import search_dialog, advanced_search_dialog, pdf_dialog, temporary_dialog
 
 def about():
     col1, col2, col3 = st.columns([1, 3, 1])
