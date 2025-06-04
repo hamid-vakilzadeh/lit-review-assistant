@@ -14,8 +14,22 @@ openai_ef = embedding_functions.OpenAIEmbeddingFunction(
     api_key=st.secrets["OPENAI_API_KEY"],
 )
 
-# api = chromadb.PersistentClient(path="library")
-# collection = api.get_collection("langchain", embedding_function=openai_ef)
+# Initialize ChromaDB client and collection
+@st.cache_resource
+def get_document_collection():
+    """Get or create the document collection"""
+    try:
+        api = chromadb.PersistentClient(path="library")
+        collection = api.get_or_create_collection("langchain", embedding_function=openai_ef)
+        return collection
+    except Exception as e:
+        st.warning(f"Could not initialize persistent client, using in-memory: {e}")
+        api = chromadb.Client()
+        collection = api.get_or_create_collection("langchain", embedding_function=openai_ef)
+        return collection
+
+# Get the collection instance
+collection = get_document_collection()
 
 
 def found_articles_in_format(docs: dict) -> list:
