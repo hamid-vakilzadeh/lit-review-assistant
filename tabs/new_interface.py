@@ -175,62 +175,12 @@ def create_new_chat():
 
 
 def chat_name():
-    if st.session_state.change_name:
-        with st.form(key='change_chat_name'):
-            st.text_input(
-                label="Chat Name",
-                placeholder="Chat Name",
-                key="new_chat_name",
-                value=st.session_state.current_chat_name,
-                label_visibility="collapsed",
-            )
-            st.form_submit_button(
-                label="Save",
-                use_container_width=True,
-                type='primary',
-                on_click=lambda: update_chat_name(),
-            )
-    else:
-
-        st.subheader(st.session_state.current_chat_name)
-        edit_button, clear_chat_btn, delete_chat, new_chat = st.columns([1, 1, 1, 1])
-        # change chat name
-        edit_button.button(
-            label="Edit",
-            key="edit_name",
-            use_container_width=True,
-            type='primary',
-            on_click=lambda: set_chat_name(),
-        )
-        # clear chat button
-        clear_chat_btn.button(
-            label="Clear",
-            key="clear_chat",
-            use_container_width=True,
-            type='primary',
-            on_click=lambda: clear_chat_only(),
-        )
-
-        # delete chat button
-        delete_chat.button(
-            label="Delete",
-            key="delete_chat",
-            use_container_width=True,
-            type='secondary',
-            on_click=lambda: delete_and_clear(),
-        )
-
-        new_chat.button(
-            label="New",
-            key="new_chat",
-            use_container_width=True,
-            type='primary',
-            on_click=lambda: create_new_chat(),
-        )
-
-        # show last updated in time formatted as 2021-01-01 00:00:00
-        last_updated = st.session_state.all_messages[st.session_state.chat_id]['last_updated']
-        st.caption(f"last updated: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(last_updated))}")
+    # Simplified chat interface - no name editing, just clear functionality
+    st.subheader("Research Chat")
+    
+    # Only keep the clear chat button
+    if st.button("🗑️ Clear Chat", use_container_width=True, type='secondary'):
+        clear_chat_only()
 
 
 def new_interface():
@@ -242,15 +192,10 @@ def new_interface():
         chat_id = add_new_message(last_updated=time.time())
         st.session_state.all_messages = get_all_chats()
 
-    st.selectbox(
-        label="Chat History",
-        key="chat_id",
-        index=0,
-        placeholder="Open a Chat",
-        options=st.session_state.all_messages.keys(),
-        format_func=lambda x: st.session_state.all_messages[x]['chat_name'],
-        on_change=lambda: change_chat(),
-    )
+    # Automatically use the first (and only) chat - no selection needed
+    if 'chat_id' not in st.session_state:
+        st.session_state.chat_id = list(st.session_state.all_messages.keys())[0]
+    
     st.session_state.current_chat_name = st.session_state.all_messages[st.session_state.chat_id]['chat_name']
 
     if "messages_to_interface" not in st.session_state:
