@@ -112,6 +112,16 @@ def ensure_session_state_vars():
     # Set default model if not already set
     if 'selected_model' not in st.session_state:
         st.session_state.selected_model = 'openai/gpt-4o'
+    
+    # RAG-related session state
+    if 'rag_documents' not in st.session_state:
+        st.session_state.rag_documents = []
+    
+    if 'rag_abstracts' not in st.session_state:
+        st.session_state.rag_abstracts = []
+    
+    if 'rag_query_results' not in st.session_state:
+        st.session_state.rag_query_results = []
 
 
 def bulk_search_column_order():

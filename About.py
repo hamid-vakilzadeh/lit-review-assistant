@@ -42,7 +42,7 @@ if __name__ == '__main__':
 
     # make page wide
     st.set_page_config(
-        layout="centered",
+        layout="wide",
         page_title="AI Research Assistant",
         page_icon="📚",
     )
@@ -81,6 +81,6 @@ if __name__ == '__main__':
                 advanced_search_dialog()
 
             if st.button("PDF", use_container_width=True):
-                temporary_dialog()
+                pdf_dialog()
 
     pg.run()
