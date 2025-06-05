@@ -1,18 +1,16 @@
 import streamlit as st
-import pandas as pd
 from utils.ai import ai_completion
 from utils.funcs import (
-    pin_piece, unpin_piece, add_to_lit_review,
+    pin_piece,
     add_rag_document_to_context, remove_rag_document_from_context,
-    add_rag_query_results_to_context, clear_rag_query_results_from_context,
+    add_rag_query_results_to_context,
     get_rag_context_summary
 )
 from utils.session_state_vars import ensure_session_state_vars
 import json
 import time
-from tabs import article_search, pdf_search
+from tabs import article_search
 from utils.local_storage import (
-    get_chat_messages_ref,
     delete_chat,
     get_chat,
     get_all_chats,
@@ -47,12 +45,18 @@ def improved_interface():
         st.session_state.all_messages = get_all_chats()
 
     if len(st.session_state.all_messages) == 0:
-        chat_id = add_new_message(last_updated=time.time())
         st.session_state.all_messages = get_all_chats()
 
     # Automatically use the first (and only) chat - no selection needed
     if 'chat_id' not in st.session_state:
         st.session_state.chat_id = list(st.session_state.all_messages.keys())[0]
+    
+    # Initialize current_chat_name early to prevent AttributeError
+    if 'current_chat_name' not in st.session_state:
+        if st.session_state.get('chat_id') and st.session_state.chat_id in st.session_state.all_messages:
+            st.session_state.current_chat_name = st.session_state.all_messages[st.session_state.chat_id]['chat_name']
+        else:
+            st.session_state.current_chat_name = "New Chat"
 
     # Header with clear branding and navigation
     st.markdown("# 🤖 AIRA: AI Research Assistant")
@@ -199,7 +203,7 @@ def render_context_panel():
                 for i, doc in enumerate(st.session_state.rag_documents):
                     st.markdown(f"**{i+1}.** {doc['title'][:50]}...")
                     st.markdown(f"   *{doc['authors']} ({doc['year']})*")
-                    if st.button(f"Remove from RAG", key=f"remove_rag_{i}", type="secondary"):
+                    if st.button("Remove from RAG", key=f"remove_rag_{i}", type="secondary"):
                         remove_rag_document_from_context(doc)
                         st.rerun()
     
@@ -216,7 +220,7 @@ def render_context_panel():
                 st.markdown(f"**Authors:** {item.get('authors', 'N/A')}")
                 st.markdown(f"**Year:** {item.get('year', 'N/A')}")
                 st.markdown(f"**DOI:** {item.get('doi', 'N/A')}")
-                if st.button(f"Remove", key=f"remove_{i}", type="secondary"):
+                if st.button("Remove", key=f"remove_{i}", type="secondary"):
                     remove_from_context(i)
         
         if len(st.session_state.review_pieces) > 5:
@@ -397,7 +401,7 @@ Please provide a comprehensive response based on the research papers provided.
                             yield delta['content']
                             
     except Exception as e:
-        yield f"❌ Error: The AI service is not responding. Please try again or select a different model."
+        yield f"❌ Error: The AI service is not responding. Please try again or select a different model: {str(e)}"
 
 # Helper functions (keeping existing functionality)
 def change_chat():
@@ -476,10 +480,10 @@ def load_chat_messages():
                 
         st.session_state.messages_to_api = st.session_state.messages_to_interface.copy()
         
-    except:
+    except Exception as e:
         st.session_state.messages_to_interface = [{
             "role": "assistant",
-            "content": "👋 Hello! I'm AIRA, your AI Research Assistant. I can help you analyze and synthesize research papers.\n\n**To get started:**\n• Use the **Research Tools** to search for articles or upload PDFs\n• Add papers to your context\n• Ask me questions about your research!"
+            "content": f"👋 Hello! I'm AIRA, your AI Research Assistant. I can help you analyze and synthesize research papers.\n\n**To get started:**\n• Use the **Research Tools** to search for articles or upload PDFs\n• Add papers to your context\n• Ask me questions about your research! Error: {str(e)}"
         }]
 
 def clear_all_context():
@@ -493,18 +497,11 @@ def clear_all_context():
 def remove_from_context(index):
     """Remove specific item from context"""
     if 0 <= index < len(st.session_state.review_pieces):
-        removed_item = st.session_state.review_pieces.pop(index)
+        st.session_state.review_pieces.pop(index)
         # Also remove from context lists
         if index < len(st.session_state.messages_to_interface_context):
             st.session_state.messages_to_interface_context.pop(index)
         if index < len(st.session_state.messages_to_api_context):
             st.session_state.messages_to_api_context.pop(index)
-        st.success(f"Removed from context!")
+        st.success("Removed from context!")
         st.rerun()
-
-# Initialize session state
-if 'current_chat_name' not in st.session_state:
-    if st.session_state.get('chat_id'):
-        st.session_state.current_chat_name = st.session_state.all_messages[st.session_state.chat_id]['chat_name']
-    else:
-        st.session_state.current_chat_name = "New Chat"
