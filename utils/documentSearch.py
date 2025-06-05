@@ -1,21 +1,35 @@
 import streamlit as st
 from utils.doi import get_article_with_doi
 
-__import__('pysqlite3')
-import sys
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 import chromadb
 from chromadb.utils import embedding_functions
+import sys
 
+__import__('pysqlite3')
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 openai_ef = embedding_functions.OpenAIEmbeddingFunction(
     model_name="text-embedding-ada-002",
     api_key=st.secrets["OPENAI_API_KEY"],
 )
 
-api = chromadb.PersistentClient(path="library")
-collection = api.get_collection("langchain", embedding_function=openai_ef)
+# Initialize ChromaDB client and collection
+@st.cache_resource
+def get_document_collection():
+    """Get or create the document collection"""
+    try:
+        api = chromadb.PersistentClient(path="library")
+        collection = api.get_or_create_collection("langchain", embedding_function=openai_ef)
+        return collection
+    except Exception as e:
+        st.warning(f"Could not initialize persistent client, using in-memory: {e}")
+        api = chromadb.Client()
+        collection = api.get_or_create_collection("langchain", embedding_function=openai_ef)
+        return collection
+
+# Get the collection instance
+collection = get_document_collection()
 
 
 def found_articles_in_format(docs: dict) -> list:
@@ -35,8 +49,6 @@ def found_articles_in_format(docs: dict) -> list:
         results.append(this_doc)
 
     return results
-
-# TODO: Check the DOI for year = 0
 
 
 #@st.cache_data(show_spinner=False)

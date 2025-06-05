@@ -66,8 +66,5 @@ def feedback_session():
                        )
 
 
-if 'user' not in st.session_state:
-    sidebar.login_and_reset_password()
-
-else:
-    feedback_session()
+# Always show feedback - no authentication required
+feedback_session()

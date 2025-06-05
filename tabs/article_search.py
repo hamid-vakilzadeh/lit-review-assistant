@@ -3,7 +3,7 @@ import streamlit as st
 from utils import documentSearch
 from utils.ai import ai_completion
 from utils.doi import get_apa_citation
-from utils.funcs import pin_piece, unpin_piece
+from utils.funcs import pin_piece, unpin_piece, add_to_lit_review, remove_from_lit_review
 from pandas import read_csv
 import json
 import requests
@@ -106,7 +106,7 @@ def update_filter():
     pass
 
 
-@st.experimental_fragment
+@st.fragment
 def article_search():
     css_code()
     st.subheader("Article Search")
@@ -254,27 +254,25 @@ def article_search():
                 left_column, right_column = st.columns(2)
 
                 with left_column:
-                    # if article is not added to notes show add notes
-                    if article not in st.session_state.pinned_articles:
+                    # if article is not added to context show add to context
+                    if article not in st.session_state.review_pieces:
                         st.button(
-                            label="📌 **pin**",
-                            key=article['id'],
+                            label="✅ **Add to Context**",
+                            key=f"add_context_{article['id']}",
                             type='primary',
                             use_container_width=True,
-                            on_click=pin_piece,
-                            args=(article, st.session_state.pinned_articles,)
+                            on_click=add_article_to_context,
+                            args=(article,)
                         )
-
                     else:
-                        # if already added to notes show remove notes
+                        # if already added to context show remove from context
                         st.button(
-                            label="↩️ **unpin**",
-                            key=article['id'],
+                            label="❌ **Remove from Context**",
+                            key=f"remove_context_{article['id']}",
                             type='secondary',
                             use_container_width=True,
-                            on_click=unpin_piece,
-                            args=(article, st.session_state.pinned_articles,)
-
+                            on_click=remove_article_from_context,
+                            args=(article,)
                         )
 
                 with right_column:
@@ -549,6 +547,7 @@ def bulk_search():
         selected_papers = st.session_state.data_to_show.iloc[papers]
 
         if st.session_state.close_advanced_search:
+            # Add selected papers to pinned articles
             st.session_state.pinned_articles_ss = \
                 pd.concat([st.session_state.pinned_articles_ss, selected_papers])
             st.session_state.pinned_articles_ss.reset_index(inplace=True)
@@ -557,9 +556,41 @@ def bulk_search():
                 inplace=True)
             st.session_state.pinned_articles_ss.set_index('paperId', inplace=True)
 
-            # add_pd_to_lit_review(st.session_state.pinned_articles_ss)
+            # Convert selected papers to the format expected by the context system
+            from utils.funcs import add_to_lit_review
+            
+            for _, paper in selected_papers.iterrows():
+                # Convert DataFrame row to dictionary format expected by the system
+                paper_dict = {
+                    'id': paper.name,  # paperId is the index
+                    'title': paper.get('title', 'Unknown Title'),
+                    'authors': ', '.join(paper.get('authors', [])) if isinstance(paper.get('authors'), list) else str(paper.get('authors', 'Unknown Authors')),
+                    'year': paper.get('year', 'Unknown Year'),
+                    'doi': paper.get('source', ''),
+                    'text': paper.get('abstract', ''),
+                    'journal': paper.get('journal', 'Unknown Journal'),
+                    'cite_counts': paper.get('citations', 0),
+                    'topics': paper.get('topics', [])
+                }
+                
+                # Add to literature review context
+                if paper_dict not in st.session_state.review_pieces:
+                    add_to_lit_review(paper_dict)
+            
+            # Close the dialog
+            st.session_state.show_advanced_search = False
+            st.success(f"✅ Added {len(selected_papers)} papers to your research context!")
             st.rerun()
 
+
+def add_article_to_context(article):
+    """Add article to research context"""
+    add_to_lit_review(article)
+    st.success(f"✅ Added '{article['title'][:50]}...' to research context!")
+
+def remove_article_from_context(article):
+    """Remove article from research context"""
+    remove_from_lit_review(article)
 
 def advanced_search():
     css_code()

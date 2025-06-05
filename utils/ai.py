@@ -40,14 +40,14 @@ def ai_completion(
     }
 
     # Show a spinner while the AI is thinking
-    with st.spinner(text='AI is thinking...'):
-        response = requests.request(
-            url="https://openrouter.ai/api/v1/chat/completions",
-            method='POST',
-            headers=headers,
-            json=body,
-            stream=stream,
-        )
+    # with st.spinner(text='AI is thinking...'):
+    response = requests.request(
+        url="https://openrouter.ai/api/v1/chat/completions",
+        method='POST',
+        headers=headers,
+        json=body,
+        stream=stream,
+    )
 
     if response.status_code != 200:
         raise f"""Error: Unable to get response from the server. \n\n {response.status_code, response.text}"""
