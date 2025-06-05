@@ -41,7 +41,7 @@ def about():
             
             Finally, restart Claude Desktop and the MCP should apper in search and tools.
 
-            > ** Note:**
+            > **Note:**
             > 
             > The API allows up to 100 requests per 5 minutes. To access a higher rate limit, visit Semantic Scholar to request authentication for your project.
             
