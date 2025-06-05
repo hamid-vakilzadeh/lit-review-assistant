@@ -1,13 +1,13 @@
 import streamlit as st
 from utils.doi import get_article_with_doi
 
-__import__('pysqlite3')
-import sys
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 import chromadb
 from chromadb.utils import embedding_functions
+import sys
 
+__import__('pysqlite3')
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 openai_ef = embedding_functions.OpenAIEmbeddingFunction(
     model_name="text-embedding-ada-002",

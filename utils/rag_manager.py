@@ -11,12 +11,10 @@ from utils.ai import ai_completion
 from utils.doi import get_citation
 import json
 import re
-from ast import literal_eval
-
 
 # SQLite module replacement for ChromaDB compatibility
-__import__('pysqlite3')
 import sys
+__import__('pysqlite3')
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 class RAGManager:
