@@ -32,6 +32,21 @@ def about():
             📄 Read and cite the paper: **Vakilzadeh, H., and Wood, D. A. (2025). The Development of a RAG-Based Artificial Intelligence Research Assistant (AIRA). _Journal of Information Systems. forthcoming_.**
 
             🚀 **Explore MCP here**: [AI - Research Assistant (MCP)](https://github.com/hamid-vakilzadeh/AIRA-SemanticScholar)
+                
+                **How to Install MCP?**
+                                
+                First, make sure you've downloaded and installed the Claude Desktop app and you have npm.
+
+                To install this MCP Server via Smithery open your terminal/CMD and run the following command:
+
+                ```bash
+                npx -y @smithery/cli@latest install @hamid-vakilzadeh/mcpsemanticscholar --client claude
+                Finally, restart Claude Desktop and the MCP should apper in search and tools.
+                ```
+
+                Note:
+
+                The API allows up to 100 requests per 5 minutes. To access a higher rate limit, visit Semantic Scholar to request authentication for your project.
         """)
 
         # display the instructions
