@@ -30,8 +30,6 @@ def about():
             Explore the original AIRA research paper, and if you use it, please cite our work. Also, be sure to check out MCP to see how far we’ve advanced since our initial release.
 
             📄 Read and cite the paper: **Vakilzadeh, H., and Wood, D. A. (2025). The Development of a RAG-Based Artificial Intelligence Research Assistant (AIRA). _Journal of Information Systems. forthcoming_.**
-
-            🚀 **Explore MCP here**: [AI - Research Assistant (MCP)](https://github.com/hamid-vakilzadeh/AIRA-SemanticScholar)
                 
             **How to Install MCP?**
 
@@ -43,9 +41,11 @@ def about():
             
             Finally, restart Claude Desktop and the MCP should apper in search and tools.
 
-            Note:
-
-            The API allows up to 100 requests per 5 minutes. To access a higher rate limit, visit Semantic Scholar to request authentication for your project.
+            > ** Note:**
+            > 
+            > The API allows up to 100 requests per 5 minutes. To access a higher rate limit, visit Semantic Scholar to request authentication for your project.
+            
+            Learn more about the MCP project on [GitHub](https://github.com/hamid-vakilzadeh/AIRA-SemanticScholar)
         """)
 
         # display the instructions
