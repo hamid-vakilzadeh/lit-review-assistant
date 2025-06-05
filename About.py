@@ -35,9 +35,9 @@ def about():
         """)
 
         # display the instructions
-        with st.expander("Instructions", expanded=False):
+        with st.expander("Instructions", expanded=True):
             st.video(
-                data="https://www.youtube.com/watch?v=-93awViey4o",
+                data="https://youtu.be/tVrKVdSf-O8",
                 autoplay=False
             )
 
