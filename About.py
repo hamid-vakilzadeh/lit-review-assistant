@@ -43,15 +43,17 @@ def about():
                 npx -y @smithery/cli@latest install @hamid-vakilzadeh/mcpsemanticscholar --client claude
             
             Finally, restart Claude Desktop and the MCP should apper in search and tools.
-            
-            <iframe width="560" height="315" src="https://www.youtube.com/embed/fYBmIUt10ck?si=RidBBrBy60qwwR0m" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+            """)
+        st.markdown("""
+                        <iframe width="560" height="315" src="https://www.youtube.com/embed/fYBmIUt10ck?si=RidBBrBy60qwwR0m" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
+                    
             > **Note:**
             > 
             > **The API allows up to 100 requests per 5 minutes. To access a higher rate limit, visit Semantic Scholar to request authentication for your project.**
             
             Learn more about the MCP project on [GitHub](https://github.com/hamid-vakilzadeh/AIRA-SemanticScholar)
-        """)
+        """, unsafe_allow_html=True)
 
         # display the instructions
         with st.expander("Instructions", expanded=True):
