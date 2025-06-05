@@ -54,7 +54,7 @@ def about():
             """)
 
         with st.expander("MCP Demo", expanded=True):
-            st.markdown("# AIRA - MCP Demo:")
+            st.markdown("## AIRA - MCP Demo:")
             st.video(
                 data="https://youtu.be/fYBmIUt10ck",
                 autoplay=False
@@ -63,7 +63,7 @@ def about():
 
         # display the instructions
         with st.expander("RAG Demo", expanded=True):
-            st.markdown("# AIRA - RAG Demo:")
+            st.markdown("## AIRA - RAG Demo:")
             st.video(
                 data="https://youtu.be/tVrKVdSf-O8",
                 autoplay=False
