@@ -29,7 +29,7 @@ def about():
 
             Explore the original AIRA research paper, and if you use it, please cite our work. Also, be sure to check out MCP to see how far we’ve advanced since our initial release.
 
-            📄 Read and cite the paper: **Vakilzadeh, H., and Wood, D. A. (2025). The Development of a RAG-Based Artificial Intelligence Research Assistant (AIRA). _Journal of Information Systems. forthcoming_.**
+            📄 Read and cite the paper: [**Vakilzadeh, H., and Wood, D. A. (2025). The Development of a RAG-Based Artificial Intelligence Research Assistant (AIRA). _Journal of Information Systems. forthcoming_.**](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5283702)
               """)
         
         st.success("""  
