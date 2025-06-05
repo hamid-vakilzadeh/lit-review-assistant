@@ -53,16 +53,16 @@ def about():
 
             """)
 
-        with st.expander("Instructions", expanded=True):
+        with st.expander("MCP Demo", expanded=True):
             st.markdown("# AIRA - MCP Demo:")
             st.video(
-                data="https://www.youtube.com/fYBmIUt10ck",
+                data="https://youtu.be/fYBmIUt10ck",
                 autoplay=False
             )
         
 
         # display the instructions
-        with st.expander("Instructions", expanded=True):
+        with st.expander("RAG Demo", expanded=True):
             st.markdown("# AIRA - RAG Demo:")
             st.video(
                 data="https://youtu.be/tVrKVdSf-O8",
