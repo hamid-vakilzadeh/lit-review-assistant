@@ -30,7 +30,9 @@ def about():
             Explore the original AIRA research paper, and if you use it, please cite our work. Also, be sure to check out MCP to see how far we’ve advanced since our initial release.
 
             📄 Read and cite the paper: **Vakilzadeh, H., and Wood, D. A. (2025). The Development of a RAG-Based Artificial Intelligence Research Assistant (AIRA). _Journal of Information Systems. forthcoming_.**
-                
+              """)
+        
+        st.success("""  
             **How to Install MCP?**
 
             First, make sure you've downloaded and installed the [Claude Desktop](https://claude.ai/download) app and you have [npm](http://nodejs.org/) installed.
