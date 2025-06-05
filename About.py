@@ -35,13 +35,16 @@ def about():
         st.success("""  
             **How to Install MCP?**
 
-            First, make sure you've downloaded and installed the [Claude Desktop](https://claude.ai/download) app and you have [npm](http://nodejs.org/) installed.
+            1. Make sure you've downloaded and installed the [Claude Desktop](https://claude.ai/download) app,
+            1. Install [npm](http://nodejs.org/).
 
-            To install this MCP Server via [Smithery](https://smithery.ai/server/@hamid-vakilzadeh/mcpsemanticscholar) open your terminal/CMD and run the following command:
+            1. To install this MCP Server via [Smithery](https://smithery.ai/server/@hamid-vakilzadeh/mcpsemanticscholar) open your terminal/CMD and run the following command:
 
                 npx -y @smithery/cli@latest install @hamid-vakilzadeh/mcpsemanticscholar --client claude
             
             Finally, restart Claude Desktop and the MCP should apper in search and tools.
+            
+            <>
 
             > **Note:**
             > 
