@@ -40,6 +40,7 @@ def about():
 
             1. To install this MCP Server via [Smithery](https://smithery.ai/server/@hamid-vakilzadeh/mcpsemanticscholar) open your terminal/CMD and run the following command:
 
+                   
                 npx -y @smithery/cli@latest install @hamid-vakilzadeh/mcpsemanticscholar --client claude
             
             Finally, restart Claude Desktop and the MCP should apper in search and tools.
