@@ -34,10 +34,10 @@ def about():
             🚀 **Explore MCP here**: [AI - Research Assistant (MCP)](https://github.com/hamid-vakilzadeh/AIRA-SemanticScholar)
                 
             **How to Install MCP?**
-                                
-            First, make sure you've downloaded and installed the Claude Desktop app and you have npm.
 
-            To install this MCP Server via Smithery open your terminal/CMD and run the following command:
+            First, make sure you've downloaded and installed the [Claude Desktop](https://claude.ai/download) app and you have [npm](http://nodejs.org/) installed.
+
+            To install this MCP Server via [Smithery](https://smithery.ai/server/@hamid-vakilzadeh/mcpsemanticscholar) open your terminal/CMD and run the following command:
 
                 npx -y @smithery/cli@latest install @hamid-vakilzadeh/mcpsemanticscholar --client claude
             
