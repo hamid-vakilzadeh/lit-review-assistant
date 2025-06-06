@@ -18,7 +18,7 @@ def about():
         )
 
         st.info("""
-            # Two Years of AIRA: From RAG to MCP
+            ## Two Years of AIRA: From RAG to MCP
 
             In June 2023, we started AIRA, an experimental AI-powered research assistant using retrieval-augmented generation (RAG). 
                    Our goal was simple: help researchers navigate and summarize extensive academic literature through easy-to-use prompts. 
