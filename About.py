@@ -76,7 +76,7 @@ def about():
 my_pages = [
     st.Page(about, title='Home', default=True, url_path='About.py'),
     st.Page("the_pages/1_AIRA App.py", title='AIRA Application'),
-    st.Page("the_pages/3_Feedback.py", title="Feedback"),
+    st.Page("the_pages/3_Feedback.py", title="Contact Us", icon=":material/feedback:"),
 ]
 
 if __name__ == '__main__':
@@ -113,7 +113,7 @@ if __name__ == '__main__':
 
         st.page_link(
             st.Page("the_pages/3_Feedback.py"),
-            label="Feedback",
+            label="Contact Us",
             icon=":material/feedback:",
             use_container_width=True,
         )
