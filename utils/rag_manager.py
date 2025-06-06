@@ -1,7 +1,4 @@
 import streamlit as st
-
-
-import chromadb
 import time
 from typing import List, Dict, Any, Optional
 from pypdf import PdfReader
@@ -13,9 +10,20 @@ import json
 import re
 
 # SQLite module replacement for ChromaDB compatibility
-import sys
-__import__('pysqlite3')
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+try:
+    import sys
+    __import__('pysqlite3')
+    sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+except ImportError:
+    pass  # If pysqlite3 is not available, use default sqlite3
+
+# Import ChromaDB with error handling
+try:
+    import chromadb
+    CHROMADB_AVAILABLE = True
+except ImportError as e:
+    st.error(f"ChromaDB import failed: {e}")
+    CHROMADB_AVAILABLE = False
 
 class RAGManager:
     """Manages RAG functionality for multiple PDFs using ChromaDB"""
@@ -31,32 +39,40 @@ class RAGManager:
     @st.cache_resource
     def _get_collection(_self):
         """Initialize ChromaDB collection for PDF storage"""
+        if not CHROMADB_AVAILABLE:
+            st.error("ChromaDB is not available. RAG functionality will be disabled.")
+            return None
+            
         try:
             if 'rag_client' not in st.session_state:
-                # Use persistent client with a specific path
-                import tempfile
-                import os
-                
-                # Create a persistent directory for ChromaDB
-                chroma_dir = os.path.join(tempfile.gettempdir(), "aira_chromadb")
-                os.makedirs(chroma_dir, exist_ok=True)
-                
-                st.session_state.rag_client = chromadb.PersistentClient(path=chroma_dir)
+                # Try persistent client first
+                try:
+                    import tempfile
+                    import os
+                    
+                    # Create a persistent directory for ChromaDB
+                    chroma_dir = os.path.join(tempfile.gettempdir(), "aira_chromadb")
+                    os.makedirs(chroma_dir, exist_ok=True)
+                    
+                    st.session_state.rag_client = chromadb.PersistentClient(path=chroma_dir)
+                    st.success("✅ ChromaDB persistent client initialized successfully")
+                    
+                except Exception as persistent_error:
+                    st.warning(f"Persistent client failed: {persistent_error}. Trying in-memory client...")
+                    # Fallback to in-memory client
+                    st.session_state.rag_client = chromadb.Client()
+                    st.info("📝 Using ChromaDB in-memory client (data will not persist)")
             
             collection = st.session_state.rag_client.get_or_create_collection(
                 "research_papers",
                 embedding_function=openai_ef
             )
             return collection
+            
         except Exception as e:
-            st.warning(f"ChromaDB initialization failed: {str(e)}. Using in-memory client.")
-            # Fallback to in-memory client
-            st.session_state.rag_client = chromadb.Client()
-            collection = st.session_state.rag_client.get_or_create_collection(
-                "research_papers",
-                embedding_function=openai_ef
-            )
-            return collection
+            st.error(f"❌ ChromaDB initialization completely failed: {str(e)}")
+            st.error("RAG functionality will be disabled. Please check your ChromaDB installation.")
+            return None
     
     def extract_pdf_text(self, uploaded_file) -> Dict[str, Any]:
         """Extract text from uploaded PDF file"""
@@ -268,6 +284,10 @@ class RAGManager:
     
     def _store_chunks_in_chromadb(self, document: Dict[str, Any], chunks: List[Any]):
         """Store PDF chunks in ChromaDB"""
+        if not self.collection:
+            st.warning("ChromaDB collection not available. PDF chunks will not be stored for RAG queries.")
+            return
+            
         try:
             # Prepare data for ChromaDB
             documents = [chunk.page_content for chunk in chunks]
@@ -300,6 +320,15 @@ class RAGManager:
     
     def query_rag(self, query: str, top_k: int = 5, doc_ids: Optional[List[str]] = None) -> Dict[str, Any]:
         """Query the RAG system for relevant content"""
+        if not self.collection:
+            return {
+                'success': False,
+                'error': 'ChromaDB collection not available',
+                'results': [],
+                'query': query,
+                'total_results': 0
+            }
+            
         try:
             # Prepare filters
             where_filter = None
@@ -341,6 +370,9 @@ class RAGManager:
     
     def get_all_documents(self) -> List[Dict[str, Any]]:
         """Get all documents in the RAG system"""
+        if not self.collection:
+            return []
+            
         try:
             # Get all unique document IDs
             all_results = self.collection.get()
@@ -369,6 +401,9 @@ class RAGManager:
     
     def remove_document(self, doc_id: str) -> bool:
         """Remove a document and all its chunks from the RAG system"""
+        if not self.collection:
+            return False
+            
         try:
             # Get all chunk IDs for this document
             results = self.collection.get(where={"doc_id": doc_id})
@@ -385,6 +420,9 @@ class RAGManager:
     
     def clear_all_documents(self) -> bool:
         """Clear all documents from the RAG system"""
+        if not self.collection or 'rag_client' not in st.session_state:
+            return False
+            
         try:
             # Delete the collection and recreate it
             st.session_state.rag_client.delete_collection("research_papers")
