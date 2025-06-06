@@ -3,7 +3,10 @@ import time
 from typing import List, Dict, Any, Optional
 from pypdf import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
-from utils.documentSearch import openai_ef
+try:
+    from utils.documentSearch import openai_ef
+except ImportError:
+    openai_ef = None
 from utils.ai import ai_completion
 from utils.doi import get_citation
 import json
@@ -41,6 +44,10 @@ class RAGManager:
         """Initialize ChromaDB collection for PDF storage"""
         if not CHROMADB_AVAILABLE:
             st.error("ChromaDB is not available. RAG functionality will be disabled.")
+            return None
+            
+        if not openai_ef:
+            st.error("OpenAI embedding function is not available. RAG functionality will be disabled.")
             return None
             
         try:
