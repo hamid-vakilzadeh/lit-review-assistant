@@ -140,12 +140,22 @@ def render_main_chat_interface():
     if 'review_pieces' not in st.session_state:
         ensure_session_state_vars()
     
-    # Context status indicator
+    # Context status indicator - check both review_pieces and RAG context
     context_count = len(st.session_state.review_pieces)
-    if context_count == 0:
+    rag_summary = get_rag_context_summary()
+    total_context_items = context_count + rag_summary['total_context_items']
+    
+    if total_context_items == 0:
         st.warning("⚠️ No research papers in context. Add papers using the research tools.")
     else:
-        st.success(f"✅ {context_count} research papers in context")
+        context_parts = []
+        if context_count > 0:
+            context_parts.append(f"{context_count} research papers")
+        if rag_summary['total_context_items'] > 0:
+            context_parts.append(f"{rag_summary['total_context_items']} RAG items")
+        
+        context_text = " + ".join(context_parts)
+        st.success(f"✅ {context_text} in context")
     
     # Initialize chat messages
     if "messages_to_interface" not in st.session_state:
@@ -341,7 +351,12 @@ def handle_user_input(user_input, chat_container):
 
 def generate_ai_response(user_input, context):
     """Generate AI response with improved prompting"""
-    if len(st.session_state.review_pieces) == 0:
+    # Check if we have any context - either from review_pieces or RAG results
+    has_review_context = len(st.session_state.review_pieces) > 0
+    has_rag_context = len(st.session_state.get('rag_query_results', [])) > 0
+    has_any_context = has_review_context or has_rag_context or (context and len(context) > 0)
+    
+    if not has_any_context:
         # No context available
         yield "I need research papers to help you. Please use the **Research Tools** to:\n\n"
         yield "• 🔍 **Search Articles** - Find relevant research papers\n"
