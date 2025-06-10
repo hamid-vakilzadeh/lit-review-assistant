@@ -1,13 +1,13 @@
 streamlit-pills~=0.3.0
 streamlit~=1.45.1
-langchain~=0.0.198
+langchain~=0.1.0
 toml~=0.10.2
 habanero~=1.2.3
 jsonlines~=3.1.0
 openai==1.59.7
 chromadb
 tiktoken==0.5.2
-pypdf~=3.13.0
+pypdf~=3.17.0
 pysqlite3-binary
 bs4
 lxml
