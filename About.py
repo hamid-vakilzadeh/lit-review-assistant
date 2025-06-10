@@ -31,9 +31,9 @@ def about():
               """)
         
         st.success("""  
-            ## How to Install MCP?
+            ## How to Install AIRA in claude Desktop (aka MCP Version)?
 
-            1. Make sure you've downloaded and installed the [Claude Desktop](https://claude.ai/download) app (you do NOT need a paid subscription to use this MCP),
+            1. Make sure you've downloaded and installed the [Claude Desktop](https://claude.ai/download) app (you do NOT need a paid subscription to use AIRA),
             1. Install [node.js](http://nodejs.org/).
 
             1. Next, open your **terminal on MacOS** or **CMD on Windows** and run the following command:
@@ -45,7 +45,7 @@ def about():
 
                 This will install the AIRA application MCP Server via [Smithery](https://smithery.ai/server/@hamid-vakilzadeh/mcpsemanticscholar).
                    
-            1. Finally, **restart Claude Desktop** and the MCP should appear in search and tools. This means that you should fully close and reopen the app. This means that on Windows, you should right-click on the taskbar icon and select "Close window" or "Quit" to ensure that the app is fully closed. On macOS, you can use Command + Q to quit the app.
+            1. Finally, **restart Claude Desktop** and AIRA MCP should appear in search and tools. To this end, you should fully close and reopen the app. This means that on Windows, you should right-click on the taskbar icon and select "Close window" or "Quit" to ensure that the app is fully closed. On macOS, you can use Command + Q to quit the app.
 
             > **Note:**
             > 
@@ -61,9 +61,9 @@ def about():
             - **Admin Rights in Windows**: If you are using Windows, you may need to run the command prompt as an administrator. To do this, search for "cmd" in the Start menu, right-click on "Command Prompt," and select "Run as administrator."
             - **macOS**: If you are using macOS, you can open the Terminal app and run the command directly.
             - **System Administrator**: If you are not the administrator of your computer, you may need to ask your system administrator to run the command for you. This may be necessary if you are using a work or school computer that has restrictions on installing software.
-            - **npx Not Recognized**: If npx is not recognized after installation restart your terminal or command prompt.
-            - **MCP Not Appearing**: If you everything is installed correctly but the MCP does not appear in Claude Desktop, try restarting the app. This means that on Windows, you should right-click on the taskbar icon and select "Close window" or "Quit" to ensure that the app is fully closed. On macOS, you can use Command + Q to quit the app. If that doesn't work, kill the process from the **Activity Monitor (macOS)** or **Task Manager (Windows)** or try restarting your computer.
-            - **ChatGPT does not support MCP technology**: Please note that the MCP technology is not supported in ChatGPT YET. But it is planned for future updates. So if you are a dedicated ChatGPT user, you may have to wait for them to support it.
+            - **npx Not Recognized**: If npx is not recognized after installing [Node.js](http://nodejs.org/), restart your terminal or command prompt.
+            - **MCP Not Appearing**: If everything is installed correctly but the MCP does not appear in Claude Desktop, try restarting the app. This means that on Windows, you should right-click on the taskbar icon and select "Close window" or "Quit" to ensure that the app is fully closed. On macOS, you can use Command + Q to quit the app. If that doesn't work, kill the Claude process from the **Activity Monitor (macOS)** or **Task Manager (Windows)** or try restarting your computer.
+            - **ChatGPT does not support MCP technology**: Please note that the MCP technology is not supported in ChatGPT _YET_. But it is planned for future updates. So if you are a dedicated ChatGPT user, you may have to wait for them to support it.
         """)                   
 
         with st.expander("MCP Demo", expanded=True):
