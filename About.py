@@ -33,7 +33,7 @@ def about():
         st.success("""  
             ## How to Install MCP?
 
-            1. Make sure you've downloaded and installed the [Claude Desktop](https://claude.ai/download) app,
+            1. Make sure you've downloaded and installed the [Claude Desktop](https://claude.ai/download) app (you do NOT need a paid subscription to use this MCP),
             1. Install [node.js](http://nodejs.org/).
 
             1. Next, install this MCP Server via [Smithery](https://smithery.ai/server/@hamid-vakilzadeh/mcpsemanticscholar) open your terminal/CMD and run the following command:
@@ -42,8 +42,8 @@ def about():
                 ```
                 npx -y @smithery/cli@latest install @hamid-vakilzadeh/mcpsemanticscholar --client claude
                 ```
-                   
 
+                   
             1. Finally, **restart Claude Desktop** and the MCP should appear in search and tools. This means that you should fully close and reopen the app. This means that on Windows, you should right-click on the taskbar icon and select "Close window" or "Quit" to ensure that the app is fully closed. On macOS, you can use Command + Q to quit the app.
 
             > **Note:**
@@ -53,6 +53,16 @@ def about():
             Learn more about the MCP project on [GitHub](https://github.com/hamid-vakilzadeh/AIRA-SemanticScholar)
 
             """)
+        
+        st.warning("""
+            ### Troubleshooting:
+                   
+            - If you are using Windows, you may need to run the command prompt as an administrator. To do this, search for "cmd" in the Start menu, right-click on "Command Prompt," and select "Run as administrator."
+            - If you are using macOS, you can open the Terminal app and run the command directly.
+            - If you are not the administrator of your computer, you may need to ask your system administrator to run the command for you. This may be necessary if you are using a work or school computer that has restrictions on installing software.
+            - If npx is not recognized after installation restart your terminal or command prompt.
+            - If you everything is installed correctly but the MCP does not appear in Claude Desktop, try restarting the app. This means that on Windows, you should right-click on the taskbar icon and select "Close window" or "Quit" to ensure that the app is fully closed. On macOS, you can use Command + Q to quit the app.
+        """)                   
 
         with st.expander("MCP Demo", expanded=True):
             st.markdown("## AIRA - MCP Demo:")
