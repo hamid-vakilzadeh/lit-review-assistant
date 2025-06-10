@@ -43,7 +43,7 @@ def about():
                 npx -y @smithery/cli@latest install @hamid-vakilzadeh/mcpsemanticscholar --client claude
                 ```
 
-            This will install the AIRA application MCP Server via [Smithery](https://smithery.ai/server/@hamid-vakilzadeh/mcpsemanticscholar).
+                This will install the AIRA application MCP Server via [Smithery](https://smithery.ai/server/@hamid-vakilzadeh/mcpsemanticscholar).
                    
             1. Finally, **restart Claude Desktop** and the MCP should appear in search and tools. This means that you should fully close and reopen the app. This means that on Windows, you should right-click on the taskbar icon and select "Close window" or "Quit" to ensure that the app is fully closed. On macOS, you can use Command + Q to quit the app.
 
