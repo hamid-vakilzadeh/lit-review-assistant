@@ -61,7 +61,7 @@ def about():
             - **macOS**: If you are using macOS, you can open the Terminal app and run the command directly.
             - **System Administrator**: If you are not the administrator of your computer, you may need to ask your system administrator to run the command for you. This may be necessary if you are using a work or school computer that has restrictions on installing software.
             - **npx Not Recognized**: If npx is not recognized after installation restart your terminal or command prompt.
-            - **MCP Not Appearing**: If you everything is installed correctly but the MCP does not appear in Claude Desktop, try restarting the app. This means that on Windows, you should right-click on the taskbar icon and select "Close window" or "Quit" to ensure that the app is fully closed. On macOS, you can use Command + Q to quit the app. If that doesn't work, kill the process from the Activity Monitor (macOS) or Task Manager (Windows) or try restarting your computer.
+            - **MCP Not Appearing**: If you everything is installed correctly but the MCP does not appear in Claude Desktop, try restarting the app. This means that on Windows, you should right-click on the taskbar icon and select "Close window" or "Quit" to ensure that the app is fully closed. On macOS, you can use Command + Q to quit the app. If that doesn't work, kill the process from the **Activity Monitor (macOS)** or **Task Manager (Windows)** or try restarting your computer.
         """)                   
 
         with st.expander("MCP Demo", expanded=True):
