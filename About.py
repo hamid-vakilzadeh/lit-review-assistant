@@ -36,7 +36,7 @@ def about():
             1. Make sure you've downloaded and installed the [Claude Desktop](https://claude.ai/download) app (you do NOT need a paid subscription to use this MCP),
             1. Install [node.js](http://nodejs.org/).
 
-            1. Next, open your terminal on MacOS or CMD on Windows and run the following command:
+            1. Next, open your **terminal on MacOS** or **CMD on Windows** and run the following command:
                    
                    
                 ```
