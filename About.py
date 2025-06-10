@@ -36,13 +36,14 @@ def about():
             1. Make sure you've downloaded and installed the [Claude Desktop](https://claude.ai/download) app (you do NOT need a paid subscription to use this MCP),
             1. Install [node.js](http://nodejs.org/).
 
-            1. Next, install the AIRA application MCP Server via [Smithery](https://smithery.ai/server/@hamid-vakilzadeh/mcpsemanticscholar) open your terminal/CMD and run the following command:
+            1. Next, open your terminal on MacOS or CMD on Windows and run the following command:
                    
                    
                 ```
                 npx -y @smithery/cli@latest install @hamid-vakilzadeh/mcpsemanticscholar --client claude
                 ```
 
+            This will install the AIRA application MCP Server via [Smithery](https://smithery.ai/server/@hamid-vakilzadeh/mcpsemanticscholar).
                    
             1. Finally, **restart Claude Desktop** and the MCP should appear in search and tools. This means that you should fully close and reopen the app. This means that on Windows, you should right-click on the taskbar icon and select "Close window" or "Quit" to ensure that the app is fully closed. On macOS, you can use Command + Q to quit the app.
 
