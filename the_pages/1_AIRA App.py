@@ -1,6 +1,5 @@
-from tabs import improved_interface, sidebar
+from tabs import improved_interface
 from utils.session_state_vars import ensure_session_state_vars
-import streamlit as st
 from tabs.css import css_code
 
 # ensure the session state variables are created
