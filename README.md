@@ -19,7 +19,7 @@ Online Version of the application is hosted at : [AI Research Assistant](https:/
 1. **Clone the repository**:
 
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/hamid-vakilzadeh/lit-review-assistant
    cd lit-review-assistant
    ```
 
