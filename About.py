@@ -3,6 +3,7 @@ from tabs import updates
 from utils.session_state_vars import ensure_session_state_vars
 from tabs.css import css_code
 
+
 def about():
     col1, col2, col3 = st.columns([1, 3, 1])
     # display the header and general settings
@@ -29,71 +30,40 @@ def about():
 
             📄 Read and cite the paper: [**Vakilzadeh, H., and Wood, D. A. (2025). The Development of a RAG-Based Artificial Intelligence Research Assistant (AIRA). _Journal of Information Systems. forthcoming_.**](https://doi.org/10.2308/ISYS-2024-041)
               """)
-        
+
         st.success("""  
-            ## How to Install AIRA in claude Desktop (aka MCP Version)?
+            ## How to Install AIRA in claude (aka MCP Version)?
 
-            1. Make sure you've downloaded and installed the [Claude Desktop](https://claude.ai/download) app (you do NOT need a paid subscription to use AIRA),
-            1. Install [node.js](http://nodejs.org/).
+            1. Sign up for a free [Claude.ai](claude.ai) account
+            1. Sign up for a free [Smithery.ai](smithery.ai) account
+            1. You will need to visit the homepage of the MCP on [Smithery.ai](https://smithery.ai/server/@hamid-vakilzadeh/mcpsemanticscholar)
 
-            1. Next, open your **terminal on MacOS** or **CMD on Windows** and run the following command:
-                   
-                   
-                ```
-                npx -y @smithery/cli@latest install @hamid-vakilzadeh/mcpsemanticscholar --client claude
-                ```
-
-                This will install the AIRA application MCP Server via [Smithery](https://smithery.ai/server/@hamid-vakilzadeh/mcpsemanticscholar).
-                   
-            1. Finally, **restart Claude Desktop** and AIRA MCP should appear in search and tools. To this end, you should fully close and reopen the app. This means that on Windows, you should right-click on the taskbar icon and select "Close window" or "Quit" to ensure that the app is fully closed. On macOS, you can use Command + Q to quit the app.
-
-            > **Note:**
-            > 
-            > **The API allows up to 100 requests per 5 minutes. To access a higher rate limit, visit Semantic Scholar to request authentication for your project.**
-            
-            Learn more about the MCP project on [GitHub](https://github.com/hamid-vakilzadeh/AIRA-SemanticScholar)
-
-            """)
-        
-        st.warning("""
-            ### Troubleshooting:
-                   
-            - **Admin Rights in Windows**: If you are using Windows, you may need to run the command prompt as an administrator. To do this, search for "cmd" in the Start menu, right-click on "Command Prompt," and select "Run as administrator."
-            - **macOS**: If you are using macOS, you can open the Terminal app and run the command directly.
-            - **System Administrator**: If you are not the administrator of your computer, you may need to ask your system administrator to run the command for you. This may be necessary if you are using a work or school computer that has restrictions on installing software.
-            - **npx Not Recognized**: If npx is not recognized after installing [Node.js](http://nodejs.org/), restart your terminal or command prompt.
-            - **MCP Not Appearing**: If everything is installed correctly but the MCP does not appear in Claude Desktop, try restarting the app. This means that on Windows, you should right-click on the taskbar icon and select "Close window" or "Quit" to ensure that the app is fully closed. On macOS, you can use Command + Q to quit the app. If that doesn't work, kill the Claude process from the **Activity Monitor (macOS)** or **Task Manager (Windows)** or try restarting your computer.
-            - **ChatGPT does not support MCP technology**: Please note that the MCP technology is not supported in ChatGPT _YET_. But it is planned for future updates. So if you are a dedicated ChatGPT user, you may have to wait for them to support it.
-        """)                   
+            1. Follow the instructions in the video below to connect the MCP to you Claude.ai account
+        """)
+        with st.expander("MCP Demo", expanded=True):
+            st.markdown("## AIRA - MCP Installation Instructions:")
+            st.video(data="https://youtu.be/FkvfVS5FGjA", autoplay=False)
 
         with st.expander("MCP Demo", expanded=True):
             st.markdown("## AIRA - MCP Demo:")
-            st.video(
-                data="https://youtu.be/fYBmIUt10ck",
-                autoplay=False
-            )
-        
+            st.video(data="https://youtu.be/fYBmIUt10ck", autoplay=False)
 
         # display the instructions
         with st.expander("RAG Demo", expanded=True):
             st.markdown("## AIRA - RAG Demo:")
-            st.video(
-                data="https://youtu.be/tVrKVdSf-O8",
-                autoplay=False
-            )
+            st.video(data="https://youtu.be/tVrKVdSf-O8", autoplay=False)
 
         with st.expander("Change Log", expanded=True):
             updates.updates()
 
 
 my_pages = [
-    st.Page(about, title='Home', default=True, url_path='About.py'),
-    st.Page("the_pages/1_AIRA App.py", title='AIRA Application'),
+    st.Page(about, title="Home", default=True, url_path="About.py"),
+    st.Page("the_pages/1_AIRA App.py", title="AIRA Application"),
     st.Page("the_pages/3_Feedback.py", title="Contact Us", icon=":material/feedback:"),
 ]
 
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     # make page wide
     st.set_page_config(
         layout="wide",
@@ -106,9 +76,8 @@ if __name__ == '__main__':
     # ensure the session state variables are created
     ensure_session_state_vars()
 
-
     col1, main_menu_col, research_tools_col, other_chats_col, col5 = st.columns(5)
-    
+
     with main_menu_col.popover("Main Menu", use_container_width=True):
         st.page_link(
             st.Page("About.py"),
@@ -131,7 +100,6 @@ if __name__ == '__main__':
             use_container_width=True,
         )
 
-    pg = st.navigation(my_pages, position='hidden')
-
+    pg = st.navigation(my_pages, position="hidden")
 
     pg.run()
