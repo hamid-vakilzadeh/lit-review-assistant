@@ -34,7 +34,7 @@ def about():
         st.success("""  
             ## How to Install AIRA in claude (aka MCP Version)?
 
-            1. Sign up for a free [Claude.ai](https://claude.ai) account
+            1. Sign up for a pro [Claude.ai](https://claude.ai) account (Claude stopped support for MCP on free accounts in early July 2025.)
             1. Sign up for a free [Smithery.ai](https://smithery.ai) account
             1. You will need to visit the homepage of the MCP on [Smithery.ai](https://smithery.ai/server/@hamid-vakilzadeh/mcpsemanticscholar)
 
