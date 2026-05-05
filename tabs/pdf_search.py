@@ -1,7 +1,7 @@
 import streamlit as st
 from utils.doi import get_citation
 from pypdf import PdfReader
-from langchain.text_splitter import CharacterTextSplitter
+from utils.text_splitter import CharacterTextSplitter
 from utils.ai import ai_completion
 from utils.funcs import show_pin_buttons
 import json
@@ -487,5 +487,3 @@ def pdf_search():
                                 st.stop()
 
     # st.write(st.session_state.current_pdf)
-
-

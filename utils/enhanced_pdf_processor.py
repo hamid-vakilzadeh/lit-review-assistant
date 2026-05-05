@@ -2,7 +2,7 @@ import streamlit as st
 import time
 import chromadb
 from pypdf import PdfReader
-from langchain.text_splitter import CharacterTextSplitter
+from utils.text_splitter import CharacterTextSplitter
 from utils.ai import ai_completion
 from utils.doi import get_citation
 from utils.documentSearch import openai_ef

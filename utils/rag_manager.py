@@ -2,7 +2,7 @@ import streamlit as st
 import time
 from typing import List, Dict, Any, Optional
 from pypdf import PdfReader
-from langchain.text_splitter import CharacterTextSplitter
+from utils.text_splitter import CharacterTextSplitter
 try:
     from utils.documentSearch import openai_ef
 except ImportError:
