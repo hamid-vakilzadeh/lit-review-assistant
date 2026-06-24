@@ -8,7 +8,7 @@ pandas>=2.2.0,<2.3.0
 openai==1.59.7
 chromadb
 tiktoken==0.5.2
-pypdf~=6.10.2
+pypdf~=6.14.2
 pysqlite3-binary
 bs4
 lxml
